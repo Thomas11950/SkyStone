@@ -49,7 +49,7 @@ public class SplineRunner {
                     i=yCoordString.length();
                 }
             }
-            double yCoord = Integer.parseInt(xCoordString);
+            double yCoord = Integer.parseInt(yCoordString);
             int headingposition = pointInStringFormat.indexOf("Heading:");
             String headingString = pointInStringFormat.substring(headingposition + 8);
             for(int i = 0; i < headingString.length(); i++){
@@ -108,7 +108,7 @@ public class SplineRunner {
         while(!splineFinished && !parentOP.isStopRequested()){
             double[][] allData = new double[spline.size()-1][3];
             for(int i = 0; i < spline.size() - 1;i++){
-                double[] lineToCurrentPointData = MathFunctions.lineToPointDistanceAndClosestPoint(spline.get(i).X, spline.get(i).Y,spline.get(i+1).X,spline.get(i+1).Y,hardware.xPosInches,hardware.yPosInches);
+                double[] lineToCurrentPointData = MathFunctions.lineToPointDistanceAndClosestPoint(spline.get(i).X, spline.get(i).Y,spline.get(i+1).X,spline.get(i+1).Y,hardware.getX(),hardware.getY());
                 allData[i] = lineToCurrentPointData;
             }
             double minDist = allData[0][0];
@@ -121,8 +121,8 @@ public class SplineRunner {
             }
             double percentOfCurrentLineTravelled = MathFunctions.findPercentageOfCurrentLineTravelled(spline.get(minDistLine).X,spline.get(minDistLine).Y, spline.get(minDistLine+1).X,spline.get(minDistLine+1).Y,allData[minDistLine][1],allData[minDistLine][2]);
             double[] targetPoint = getTargetPoint(minDistLine, percentOfCurrentLineTravelled, lookAheadDist);
-            double targetX = spline.get((int)targetPoint[0]).X + Math.abs(spline.get((int)targetPoint[0]).X - spline.get((int)targetPoint[0] + 1).X) * targetPoint[1];
-            double targetY = spline.get((int)targetPoint[0]).Y + Math.abs(spline.get((int)targetPoint[0]).Y - spline.get((int)targetPoint[0] + 1).Y) * targetPoint[1];
+            double targetX = spline.get((int)targetPoint[0]).X + (spline.get((int)targetPoint[0] + 1).X - spline.get((int)targetPoint[0]).X) * targetPoint[1];
+            double targetY = spline.get((int)targetPoint[0]).Y + (spline.get((int)targetPoint[0] + 1).Y - spline.get((int)targetPoint[0]).Y) * targetPoint[1];
             setPowersForTargetPoint(spline.get(minDistLine), targetX,targetY);
         }
     }
@@ -150,7 +150,7 @@ public class SplineRunner {
                 }
             }
             double[] toReturn = new double[2];
-            toReturn[0] = spline.size()-1;
+            toReturn[0] = spline.size()-2;
             toReturn[1] = 1;
             return toReturn;
         }

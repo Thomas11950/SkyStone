@@ -20,6 +20,60 @@ public class MathFunctions {
         return testPoint <= endNum && testPoint >= startNum;
     }
     public static double[] lineToPointDistanceAndClosestPoint(double startPointX, double startPointY, double endPointX, double endPointY, double setPointX, double setPointY){
+        if(endPointY==startPointY){
+            if(isInBetween(startPointX,endPointX, setPointX)){
+                double[] outputData = new double[3];
+                outputData[0] = Math.abs(startPointY-setPointY);
+                outputData[1] = setPointX;
+                outputData[2] = startPointY;
+                return outputData;
+            }
+            else{
+                double startPointDist = Math.hypot((startPointX-setPointX), (startPointY-setPointY));
+                double endPointDist = Math.hypot((endPointX-setPointX), (endPointY-setPointY));
+                if(startPointDist < endPointDist){
+                    double[] outputData = new double[3];
+                    outputData[0] = startPointDist;
+                    outputData[1] = startPointX;
+                    outputData[2] = startPointY;
+                    return outputData;
+                }
+                else{
+                    double[] outputData = new double[3];
+                    outputData[0] = endPointDist;
+                    outputData[1] = endPointX;
+                    outputData[2] = endPointY;
+                    return  outputData;
+                }
+            }
+        }
+        if(endPointX==startPointX){
+            if(isInBetween(startPointY,endPointY, setPointY)){
+                double[] outputData = new double[3];
+                outputData[0] = Math.abs(startPointX-setPointX);
+                outputData[1] = startPointX;
+                outputData[2] = setPointY;
+                return outputData;
+            }
+            else{
+                double startPointDist = Math.hypot((startPointX-setPointX), (startPointY-setPointY));
+                double endPointDist = Math.hypot((endPointX-setPointX), (endPointY-setPointY));
+                if(startPointDist < endPointDist){
+                    double[] outputData = new double[3];
+                    outputData[0] = startPointDist;
+                    outputData[1] = startPointX;
+                    outputData[2] = startPointY;
+                    return outputData;
+                }
+                else{
+                    double[] outputData = new double[3];
+                    outputData[0] = endPointDist;
+                    outputData[1] = endPointX;
+                    outputData[2] = endPointY;
+                    return  outputData;
+                }
+            }
+        }
         double slope = (endPointY-startPointY)/(endPointX-startPointX);
         double yIntercept = startPointY - slope * startPointX;
         double inverseSlope = -1/slope;
@@ -39,7 +93,7 @@ public class MathFunctions {
                 double[] outputData = new double[3];
                 outputData[0] = startPointDist;
                 outputData[1] = startPointX;
-                outputData[2] = endPointX;
+                outputData[2] = startPointY;
                 return outputData;
             }
             else{
