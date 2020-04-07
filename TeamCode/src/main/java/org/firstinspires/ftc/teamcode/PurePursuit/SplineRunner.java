@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.PurePursuit;
 import android.content.res.Resources;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.HardwareControllerThreadInterface;
 
@@ -159,6 +160,11 @@ public class SplineRunner {
         return Math.hypot(spline.get(linePosition).X - spline.get(linePosition + 1).X, spline.get(linePosition).Y - spline.get(linePosition + 1).Y);
     }
     public void setPowersForTargetPoint(Pose currentPoint, double targetX, double targetY){
-        //depends on dt
+        double targetAngle = Math.atan2(targetY,targetX);
+        double currentHeading = hardware.angle;
+        double deltaHeading = targetAngle-currentHeading;
+        double movementY = Math.cos(deltaHeading);
+        double movementX = Math.sin(deltaHeading);
+        double turn = Range.clip(deltaHeading,-1,1);
     }
 }

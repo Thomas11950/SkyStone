@@ -11,17 +11,12 @@ import com.qualcomm.robotcore.hardware.LynxModuleMeta;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.teamcode.PurePursuit.MathFunctions;
 
 import java.util.List;
 
 public class HardwareControllerThreadInterface extends Thread {
     HardwareMap hardwareMap;
-    DcMotor Left;
-    public boolean leftWriteRequested=false;
-    public double leftWritePower;
-    DcMotor Right;
-    public boolean rightWriteRequested=false;
-    public double rightWritePower;
     public BNO055IMU imu;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
     public double angle;
@@ -41,10 +36,12 @@ public class HardwareControllerThreadInterface extends Thread {
     //38mm diameter, converted to inches = 1.4960630
     public static double circumfrence = 1.4960630 * Math.PI;
     public int ticker = 0;
+    public int ticker2 = 0;
+    public Motor[] hub1Motors;
+    public Motor[] hub2Motors;
+    public RegServo[] servos;
     public HardwareControllerThreadInterface(HardwareMap hardwareMap, LinearOpMode parentOP){
         this.hardwareMap = hardwareMap;
-        Left = this.hardwareMap.get(DcMotor.class,"left");
-        Right = this.hardwareMap.get(DcMotor.class,"right");
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
@@ -63,21 +60,14 @@ public class HardwareControllerThreadInterface extends Thread {
         for (LynxModule module : allHubs) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
+        hub1Motors = new Motor[4];//initialize here
+        hub2Motors = new Motor[4];//initialize here
+        servos = new RegServo[12];//initialize here
     }
-    public double keepAngleWithin180Degrees(double angle){
-        while(angle > Math.toRadians(180)){
-            angle -= Math.toRadians(360);
-        }
-        while(angle < Math.toRadians(180)){
-            angle += Math.toRadians(360);
-        }
-        return angle;
-    }
+
     public void run(){
         while(!parentOP.isStopRequested()){
-            for(LynxModule module: allHubs){
-                module.clearBulkCache();
-            }
+            allHubs.get(0).clearBulkCache(); // depends on which one is the odo hub
             int portReading=0;
             int starboardReading=0;
             int lateralReading=0;
@@ -87,7 +77,7 @@ public class HardwareControllerThreadInterface extends Thread {
             double deltaAngle;
             if(ticker % 3 == 0){
                 angle = Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
-                deltaAngle = keepAngleWithin180Degrees(angle - previousAngleReading);
+                deltaAngle = MathFunctions.keepAngleWithin180Degrees(angle - previousAngleReading);
                 ticker = 1;
             }
             else{
@@ -108,13 +98,60 @@ public class HardwareControllerThreadInterface extends Thread {
             previousStarboardReading = starboardReading;
             previousLateralReading = (int)localX;
             previousAngleReading = angle;
-            if(rightWriteRequested){
-                Right.setPower(rightWritePower);
-                rightWriteRequested = false;
+            for(Motor motor: hub1Motors){
+                if(motor.setTargetPosRequested){
+                    motor.motor.setTargetPosition(motor.targetPosition);
+                    motor.setTargetPosRequested = false;
+                }
             }
-            if(leftWriteRequested){
-                Left.setPower(leftWritePower);
-                leftWriteRequested = false;
+            for(Motor motor: hub1Motors){
+                if(motor.writePowerRequested){
+                    motor.motor.setPower(motor.power);
+                    motor.writePowerRequested = false;
+                }
+                if(motor.writeVelocityRequested){
+                    motor.motor.setVelocity(motor.velocity);
+                    motor.writeVelocityRequested = false;
+                }
+            }
+            for(Motor motor: hub2Motors){
+                if(motor.setTargetPosRequested){
+                    motor.motor.setTargetPosition(motor.targetPosition);
+                    motor.setTargetPosRequested = false;
+                }
+            }
+            for(Motor motor: hub2Motors){
+                if(motor.writePowerRequested){
+                    motor.motor.setPower(motor.power);
+                    motor.writePowerRequested = false;
+                }
+                if(motor.writeVelocityRequested){
+                    motor.motor.setVelocity(motor.velocity);
+                    motor.writeVelocityRequested = false;
+                }
+            }
+            for(RegServo servo: servos){
+                if(servo.writeRequested){
+                    servo.servo.setPosition(servo.position);
+                    servo.writeRequested = false;
+                }
+            }
+            boolean hub2ReadNeeded = false;
+            for(Motor motor: hub2Motors){
+                if(motor.readRequested)
+                    hub2ReadNeeded = true;
+            }
+            if(ticker2 % 10 == 0 && hub2ReadNeeded){
+                allHubs.get(1).clearBulkCache(); // depends on which one is not the odo hub
+                for(Motor motor: hub2Motors){
+                    if(motor.readRequested){
+                        motor.currentPosition = motor.motor.getCurrentPosition();
+                    }
+                }
+                ticker2 = 1;
+            }
+            else if (hub2ReadNeeded){
+                ticker2++;
             }
         }
     }
@@ -125,14 +162,6 @@ public class HardwareControllerThreadInterface extends Thread {
     public double getY(){
         yPosInches = yPosTicks * ticks_per_rotation / circumfrence;
         return yPosInches;
-    }
-    public void writeRight(double power){
-        rightWriteRequested = true;
-        rightWritePower = power;
-    }
-    public void writeLeft(double power){
-        leftWriteRequested = true;
-        leftWritePower = power;
     }
 
 }

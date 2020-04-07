@@ -3,6 +3,15 @@ package org.firstinspires.ftc.teamcode.PurePursuit;
 import java.util.ArrayList;
 
 public class MathFunctions {
+    public static double keepAngleWithin180Degrees(double angle){
+        while(angle > Math.toRadians(180)){
+            angle -= Math.toRadians(360);
+        }
+        while(angle < -Math.toRadians(180)){
+            angle += Math.toRadians(360);
+        }
+        return angle;
+    }
     public static double[] findIntercept(double equation1Slope, double equation1YIntercept, double equation2Slope, double equation2YIntercept){
         double x = (equation2YIntercept-equation1YIntercept)/(equation1Slope-equation2Slope);
         double y = equation1Slope * x + equation1YIntercept;
