@@ -160,11 +160,11 @@ public class SplineRunner {
         return Math.hypot(spline.get(linePosition).X - spline.get(linePosition + 1).X, spline.get(linePosition).Y - spline.get(linePosition + 1).Y);
     }
     public void setPowersForTargetPoint(Pose currentPoint, double targetX, double targetY){
-        double targetAngle = Math.atan2(targetY,targetX);
+        double targetAngle = Math.atan2(targetY-hardware.getY(),targetX-hardware.getX());
         double currentHeading = hardware.angle;
-        double deltaHeading = targetAngle-currentHeading;
-        double movementY = Math.cos(deltaHeading);
-        double movementX = Math.sin(deltaHeading);
-        double turn = Range.clip(deltaHeading,-1,1);
+        double deltaHeading = MathFunctions.keepAngleWithin180Degrees(targetAngle-currentHeading);
+        double deltaHeadingToTurn = MathFunctions.keepAngleWithin180Degrees(currentPoint.heading- currentHeading);
+        double turn = Range.clip(deltaHeadingToTurn,-1,1);
+        hardware.mecanumDrive.setPowers(deltaHeading, currentPoint.translationPower, turn*currentPoint.rotationPower);
     }
 }

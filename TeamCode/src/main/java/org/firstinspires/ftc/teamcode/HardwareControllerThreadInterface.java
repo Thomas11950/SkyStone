@@ -40,6 +40,7 @@ public class HardwareControllerThreadInterface extends Thread {
     public Motor[] hub1Motors;
     public Motor[] hub2Motors;
     public RegServo[] servos;
+    public MecanumDrive mecanumDrive;
     public HardwareControllerThreadInterface(HardwareMap hardwareMap, LinearOpMode parentOP){
         this.hardwareMap = hardwareMap;
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
