@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.hardware.DcMotorEx;
+import org.firstinspires.ftc.teamcode.hardware.Motor;
 
 public class SixWheelDriveBenjamin {
     Motor Left;

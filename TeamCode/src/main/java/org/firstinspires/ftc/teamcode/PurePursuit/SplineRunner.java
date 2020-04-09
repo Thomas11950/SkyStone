@@ -1,27 +1,27 @@
 package org.firstinspires.ftc.teamcode.PurePursuit;
-import android.content.res.Resources;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.HardwareControllerThreadInterface;
+import org.firstinspires.ftc.teamcode.hardware.Hardware;
+import org.firstinspires.ftc.teamcode.hardware.HardwareThreadInterface;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import javax.xml.XMLConstants;
-
 public class SplineRunner {
     String fileNameForPoints;
     File fileContainingPoints;
     ArrayList<Pose> spline = new ArrayList<Pose>();
-    HardwareControllerThreadInterface hardware;
+    HardwareThreadInterface hardwareThreadInterface;
+    Hardware hardware;
     LinearOpMode parentOP;
-    public SplineRunner(String fileNameForPoints, HardwareControllerThreadInterface hardware, LinearOpMode parentOP){
+    public SplineRunner(String fileNameForPoints, HardwareThreadInterface hardwareThreadInterface, LinearOpMode parentOP){
         this.parentOP = parentOP;
-        this.hardware = hardware;
+        this.hardwareThreadInterface = hardwareThreadInterface;
+        this.hardware = hardwareThreadInterface.hardware;
         this.fileNameForPoints = fileNameForPoints;
         fileContainingPoints = new File(this.fileNameForPoints);
         Scanner scnr;
@@ -163,8 +163,10 @@ public class SplineRunner {
         double targetAngle = Math.atan2(targetY-hardware.getY(),targetX-hardware.getX());
         double currentHeading = hardware.angle;
         double deltaHeading = MathFunctions.keepAngleWithin180Degrees(targetAngle-currentHeading);
+        double movementY = currentPoint.translationPower*Math.cos(deltaHeading);
+        double movementX = currentPoint.translationPower*Math.sin(deltaHeading);
         double deltaHeadingToTurn = MathFunctions.keepAngleWithin180Degrees(currentPoint.heading- currentHeading);
         double turn = Range.clip(deltaHeadingToTurn,-1,1);
-        hardware.mecanumDrive.setPowers(deltaHeading, currentPoint.translationPower, turn*currentPoint.rotationPower);
+        hardware.mecanumDrive.setPowers(movementX,movementY, turn*currentPoint.rotationPower);
     }
 }

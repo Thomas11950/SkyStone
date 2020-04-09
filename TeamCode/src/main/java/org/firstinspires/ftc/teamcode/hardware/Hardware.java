@@ -1,12 +1,10 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.hardware;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.LynxModuleMeta;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -15,12 +13,11 @@ import org.firstinspires.ftc.teamcode.PurePursuit.MathFunctions;
 
 import java.util.List;
 
-public class HardwareControllerThreadInterface extends Thread {
+public class Hardware {
     HardwareMap hardwareMap;
     public BNO055IMU imu;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
     public double angle;
-    LinearOpMode parentOP;
     List<LynxModule> allHubs;
     private double centerWheelOffset = 0.182;
     private double starboardAndPortOffset=7.5645;
@@ -41,7 +38,7 @@ public class HardwareControllerThreadInterface extends Thread {
     public Motor[] hub2Motors;
     public RegServo[] servos;
     public MecanumDrive mecanumDrive;
-    public HardwareControllerThreadInterface(HardwareMap hardwareMap, LinearOpMode parentOP){
+    public Hardware(HardwareMap hardwareMap){
         this.hardwareMap = hardwareMap;
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
@@ -56,7 +53,6 @@ public class HardwareControllerThreadInterface extends Thread {
         previousLateralReading = 0;
         previousStarboardReading = 0;
         previousPortReading = 0;
-        this.parentOP = parentOP;
         allHubs = this.hardwareMap.getAll(LynxModule.class);
         for (LynxModule module : allHubs) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
@@ -66,8 +62,7 @@ public class HardwareControllerThreadInterface extends Thread {
         servos = new RegServo[12];//initialize here
     }
 
-    public void run(){
-        while(!parentOP.isStopRequested()){
+    public void loop(){
             allHubs.get(0).clearBulkCache(); // depends on which one is the odo hub
             int portReading=0;
             int starboardReading=0;
@@ -154,7 +149,7 @@ public class HardwareControllerThreadInterface extends Thread {
             else if (hub2ReadNeeded){
                 ticker2++;
             }
-        }
+
     }
     public double getX(){
         xPosInches = xPosTicks * ticks_per_rotation / circumfrence;
