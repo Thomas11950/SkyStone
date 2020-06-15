@@ -9,11 +9,29 @@ public class SixWheelDriveBenjamin {
         this.Left = Left;
         this.Right = Right;
     }
-    public void setPowers(double stickAngle, double power, double turnMagnitude){
-        /*Write This Class. StickAngle is the joystick angle. Angle zero is facing up and you go
-        counterclockwise from there.
-        Power is the translational power (front/back and right/left)
-        turnMagnitude is the turning power
-         */
+    public void setPowers(double forwardsBackPower, double turnPower){
+        double sum = Math.abs(forwardsBackPower) + Math.abs(turnPower);
+        double leftTurn = 0;
+        double rightTurn = 0;
+        if(sum > 1 || sum < -1) {
+            if (turnPower > 0)
+                leftTurn = turnPower / sum;
+            if (turnPower < 0)
+                rightTurn = turnPower / sum * -1;
+            double leftForward = forwardsBackPower / sum;
+            double rightForward = forwardsBackPower / sum;
+            Left.setPower(leftTurn + leftForward);
+            Right.setPower(rightTurn + rightForward);
+        }
+        else{
+            if (turnPower > 0) {
+                Left.setPower(forwardsBackPower + turnPower);
+                Right.setPower(forwardsBackPower);
+            }
+            if (turnPower < 0){
+                Left.setPower(forwardsBackPower);
+                Right.setPower(forwardsBackPower + turnPower);
+            }
+        }
     }
 }
