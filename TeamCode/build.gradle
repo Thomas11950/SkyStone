@@ -13,3 +13,7 @@
 
 // Include common definitions from above.
 apply from: '../build.common.gradle'
+dependencies {
+    implementation 'org.openftc:opencv-repackaged:4.1.0-B'
+    implementation 'com.android.support:support-annotations:28.0.0'
+}
