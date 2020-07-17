@@ -26,7 +26,7 @@ public class Path {
 	                i=xCoordString.length();
 	            }
 	        }
-	        int xCoord = Integer.parseInt(xCoordString);
+	        double xCoord = Double.parseDouble(xCoordString);
 	        int yCoordPosition = pointInStringFormat.indexOf("Y:");
 	        String yCoordString = pointInStringFormat.substring(yCoordPosition + 2);
 	        for(int i = 0; i < yCoordString.length(); i++){
@@ -35,7 +35,7 @@ public class Path {
 	                i=yCoordString.length();
 	            }
 	        }
-	        int yCoord = Integer.parseInt(yCoordString);
+	        double yCoord = Double.parseDouble(yCoordString);
 	        int powerInitialPosition = pointInStringFormat.indexOf("PowerInitial:");
 	        String powerInitialString = pointInStringFormat.substring(powerInitialPosition + 13);
 	        for(int i = 0; i < powerInitialString.length(); i++){

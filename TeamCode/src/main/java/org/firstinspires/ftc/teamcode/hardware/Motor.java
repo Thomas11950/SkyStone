@@ -12,6 +12,7 @@ public class Motor {
     public double power;
     public double velocity;
     public int currentPosition;
+    public double currentVelocity;
     public DcMotorEx motor;
     public Motor(DcMotorEx motor){
         writeVelocityRequested = false;
@@ -38,5 +39,8 @@ public class Motor {
     }
     public int getCurrentPosition(){
         return  currentPosition;
+    }
+    public double getVelocity(){
+        return currentVelocity;
     }
 }

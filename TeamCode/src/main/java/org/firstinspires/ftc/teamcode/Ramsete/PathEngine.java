@@ -125,7 +125,13 @@ public class PathEngine{
 			double constantK = MathFunctions.getConstantK(currentMotionData.desiredVelocity, currentMotionData.desiredAngularVelocity,  constantB,  constantC);
 			double angularVelocityCommand = MathFunctions.getAngularVelocityCommand(currentMotionData.desiredVelocity, currentMotionData.desiredAngularVelocity, headingError, yErrorLocal, constantB, constantK);
 			double velocityCommand = MathFunctions.velocityCommand(currentMotionData.desiredVelocity, headingError, xErrorLocal, constantK);
-			hardware.sixWheelDrive.setPowers(velocityCommand,angularVelocityCommand);
+			hardware.sixWheelDrive.setMotion(velocityCommand,angularVelocityCommand);
+			try{
+				Thread.sleep(50);
+			}
+			catch(InterruptedException e){
+				return;
+			}
 		}
 	}
 }
