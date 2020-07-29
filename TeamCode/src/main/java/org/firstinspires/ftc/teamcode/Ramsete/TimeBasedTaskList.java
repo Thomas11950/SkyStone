@@ -6,8 +6,15 @@ import java.util.ArrayList;
 
 public class TimeBasedTaskList {
 	ArrayList<Task> taskList;
+	FileWriter writer;
 	public TimeBasedTaskList() {
 		taskList = new ArrayList<Task>();
+		try {
+			writer = new FileWriter("//sdcard//FIRST//ramsetedesiredkinematics.txt");
+		}
+		catch(IOException e){
+			e.printStackTrace();
+		}
 	}
 	public void addTask(Task task) {
 		taskList.add(task);
@@ -25,9 +32,51 @@ public class TimeBasedTaskList {
 			runningTime+=taskList.get(i).timeTaken;
 			if(runningTime > timeStamp) {
 				runningTime-=taskList.get(i).timeTaken;
-				return new MotionData(taskList.get(i).getDesiredHeading(timeStamp-runningTime), taskList.get(i).getDesiredAngularVelocity(timeStamp-runningTime), taskList.get(i).getDesiredPosition(timeStamp - runningTime), taskList.get(i).getDesiredVelocity(timeStamp-runningTime));
+				MotionData toReturn;
+				toReturn = new MotionData(taskList.get(i).getDesiredHeading(timeStamp-runningTime), taskList.get(i).getDesiredAngularVelocity(timeStamp-runningTime), taskList.get(i).getDesiredPosition(timeStamp - runningTime), taskList.get(i).getDesiredVelocity(timeStamp-runningTime), taskList.get(i).angularAccel,taskList.get(i).acceleration);
+				try {
+					writer.write("Time: " + timeStamp + ", Heading: " + toReturn.desiredHeading);
+				}
+				catch(IOException e){
+					e.printStackTrace();
+				}
+				return toReturn;
 			}
 		}
-		return new MotionData(0,0,new Point(0,0),0);
+		return new MotionData(0,0,new Point(0,0),0,0,0);
+	}
+	public void writeAllData() {
+		FileWriter writer;
+		try {
+			 writer = new FileWriter("//sdcard//FIRST//RamseteKinematicData.txt");
+		}
+		catch(IOException e){
+			return;
+		}
+		for(Task t: taskList){
+			if(t.isArcTask()){
+				ArcTask arct = (ArcTask)t;
+				try {
+					writer.write("timeTaken: "+ arct.timeTaken + ", Velo: " + arct.getDesiredVelocity(0) + ", AngularVelo: " + arct.getDesiredAngularVelocity(0) + ", Accel: " + arct.acceleration + ", AngularAccel: " + arct.angularAccel + "\n");
+				}
+				catch(IOException e){
+					return;
+				}
+			}
+			else{
+				try {
+					writer.write("timeTaken: "+t.timeTaken+", Velo: " + t.getDesiredVelocity(0) + ", AngularVelo: " + t.getDesiredAngularVelocity(0) + ", Accel: " + t.acceleration + ", AngularAccel: " + 0 + "\n");
+				}
+				catch(IOException e){
+					return;
+				}
+			}
+		}
+		try {
+			writer.close();
+		}
+		catch(IOException e){
+			return;
+		}
 	}
 }

@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -19,9 +20,13 @@ import java.util.List;
 
 public class Hardware {
     HardwareMap hardwareMap;
+    static HardwareMap hwMap;
     public BNO055IMU imu;
+    public BNO055IMU imu2;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
     public double angle;
+    public double angleOdo;
+    public double previousAngleOdoReading;
     public List<LynxModule> allHubs;
     private double centerWheelOffset = 3.847;
     public static double trackWidth = 16.037;
@@ -34,6 +39,8 @@ public class Hardware {
     public double yPosInches = 0;
     public double yPosTicksAlt=0;
     public double xPosTicksAlt=0;
+    public double xPosTicksAltAlt = 0;
+    public double yPosTicksAltAlt = 0;
     private int previousPortReading;
     private int previousStarboardReading;
     private int previousLateralReading;
@@ -59,6 +66,12 @@ public class Hardware {
     public double prevTime;
     String TAG = "odo";
     public boolean updatePID;
+    public double prevLocalY;
+    public double banglePrev=0;
+    double canglePrev=0;
+    public double danglePrev=0;
+    public double localY;
+    public double integratedAngularVeloTracker;
     public Hardware(HardwareMap hardwareMap){
         updatePID = false;
         this.hardwareMap = hardwareMap;
@@ -89,11 +102,26 @@ public class Hardware {
         sixWheelDrive = new SixWheelDrive(hub1Motors[0],hub1Motors[1],hub1Motors[2],hub1Motors[3],time);
         hub2Motors = new Motor[4];//initialize here
         servos = new RegServo[12];//initialize here
+        putHWmap(hardwareMap);
     }
 
     public void loop(){
+
         loops++;
-        double currentTime = time.milliseconds();
+        double deltaAngle=0;
+        double deltaAngleOdo=0;
+        if(ticker % 8 == 0) {
+            double bangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
+            double dangle = 0;// = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
+            double deltaAngle1 = 360/356.851325758*360/359.83265011*MathFunctions.keepAngleWithin180Degrees(bangle - banglePrev);
+            double deltaAngle2 = 360/356.851325758*360/359.83265011*MathFunctions.keepAngleWithin180Degrees(dangle - danglePrev);
+            banglePrev = bangle;
+            danglePrev = dangle;
+            angle = deltaAngle1 + canglePrev;
+            deltaAngle = angle-previousAngleReading;
+            canglePrev = angle;
+            ticker = 1;
+        }
         hub1Motors[0].readRequested = true;
         hub1Motors[1].readRequested = true;
         hub1Motors[3].readRequested = true;
@@ -126,55 +154,54 @@ public class Hardware {
             int portReading=hub1Motors[0].getCurrentPosition();
             int starboardReading=hub1Motors[3].getCurrentPosition();
             int lateralReading=-hub1Motors[1].getCurrentPosition();
-
         if(firstLoop){
             startTime = time.milliseconds();
             prevTime = startTime;
             previousLateralReading = lateralReading;
             previousStarboardReading = starboardReading;
             previousPortReading = portReading;
+            previousAngleReading = angle;
+            previousAngleOdoReading = angle;
+            prevLocalY = 0;
             firstLoop = false;
         }
-        double portVelo=(portReading-previousPortReading)/(currentTime - prevTime) * circumfrence / ticks_per_rotation;//inches/sec
-        double starboardVelo=(starboardReading-previousStarboardReading)/(currentTime-prevTime) * circumfrence / ticks_per_rotation;//inches/sec
-            int PortChange = portReading - previousPortReading;
+        double currentTime = time.milliseconds();
+       int PortChange = portReading - previousPortReading;
             int StarboardChange = starboardReading - previousStarboardReading;
-            double deltaAngle;
-            /*if(ticker % 3 == 0){*/
-                angle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle)+Math.toRadians(180));
-                deltaAngle = MathFunctions.keepAngleWithin180Degrees(angle - previousAngleReading);
-                ticker = 1;/*
-            }
-            else{
-                deltaAngle = (StarboardChange - PortChange) / (odoWidth* ticks_per_rotation / circumfrence);
-                angle+=deltaAngle;
-                ticker++;
-            }*/
-            double localX = lateralReading - previousLateralReading;//-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
-            double localXAlt =  lateralReading - previousLateralReading-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
+        if(ticker%8!=0) {
+            deltaAngleOdo  =  360/363.090869374*360/361.49102385*360/358.47252*360/361.801642105*360/358.753786593*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
+            angle += deltaAngleOdo;
+            deltaAngle = deltaAngleOdo;
+            ticker++;
+        }
+            double deltaAngleBodo  =  360/363.090869374*360/361.49102385*360/358.47252*360/361.801642105*360/358.753786593*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
+            angleOdo +=deltaAngleBodo;
+            double localXAlt = lateralReading - previousLateralReading;//-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
+            double localX =  lateralReading - previousLateralReading-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
 
         /*double localY = (PortChange + (deltaAngle * portOffset * (ticks_per_rotation/circumfrence)) + StarboardChange - (deltaAngle * starboardOffset * (ticks_per_rotation/circumfrence)))/2.0;
- */         double localY = PortChange; //
-            double localYAlt = PortChange+ (deltaAngle * portOffset * (ticks_per_rotation/circumfrence));
+ */         double localYAlt = PortChange; //
+             localY = (PortChange+ (deltaAngle * portOffset * (ticks_per_rotation/circumfrence)) + StarboardChange - (deltaAngle * starboardOffset * (ticks_per_rotation/circumfrence)))/2;
             RobotLog.dd(TAG, "lateralReading: " + lateralReading);
             RobotLog.dd(TAG, "prevlateral: " + previousLateralReading);
             RobotLog.dd(TAG, "portchange: " + PortChange);
             RobotLog.dd(TAG, "deltaAngle: " + deltaAngle+", prevAngle: " +previousAngleReading);
             RobotLog.dd(TAG, "localX: "+localX);
             RobotLog.dd(TAG,"localY: "+localY);
-            if(deltaAngle < Math.toRadians(0.05)||localY==0||localX==0||true){
+            if(localX == 0 && localY == 0){
+
+            }
+            else {
                 yPosTicks += (localY) * Math.sin(previousAngleReading + deltaAngle * 0.5) - (localX) * Math.cos(previousAngleReading + deltaAngle * 0.5);//updates Y position
                 xPosTicks += (localY) * Math.cos(previousAngleReading + deltaAngle * 0.5) + (localX) * Math.sin(previousAngleReading + deltaAngle * 0.5);//updates X position
                 yPosTicksAlt += (localYAlt) * Math.sin(previousAngleReading + deltaAngle * 0.5) - (localXAlt) * Math.cos(previousAngleReading + deltaAngle * 0.5);//updates Y position
                 xPosTicksAlt += (localYAlt) * Math.cos(previousAngleReading + deltaAngle * 0.5) + (localXAlt) * Math.sin(previousAngleReading + deltaAngle * 0.5);//updates X position
-                RobotLog.dd(TAG, "yPosTicks increment: "+ ((localY) * Math.sin(previousAngleReading + deltaAngle * 0.5) - (localX) * Math.cos(previousAngleReading + deltaAngle * 0.5)));//updates Y position)
-                RobotLog.dd(TAG, "xPosTicks increment: " +((localY) * Math.cos(previousAngleReading + deltaAngle * 0.5) + (localX) * Math.sin(previousAngleReading + deltaAngle * 0.5)));//updates X position))
-                RobotLog.dd(TAG, "xPosTicks: "+ xPosTicks);
-                RobotLog.dd(TAG,"yPosTicks: "+yPosTicks);
-            }
-            else{
-                xPosTicks += localY / deltaAngle * (Math.sin(angle)-Math.sin(previousAngleReading)) + localX/deltaAngle * (Math.cos(previousAngleReading)-Math.cos(angle));
-                yPosTicks += localY / deltaAngle * (Math.cos(previousAngleReading) - Math.cos(angle)) - localX/deltaAngle * (Math.sin(angle) - Math.sin(previousAngleReading));
+                yPosTicksAltAlt += (localY) * Math.sin(previousAngleOdoReading + deltaAngleOdo * 0.5) - (localX) * Math.cos(previousAngleOdoReading + deltaAngleOdo * 0.5);//updates Y position
+                xPosTicksAltAlt += (localY) * Math.cos(previousAngleOdoReading + deltaAngleOdo * 0.5) + (localX) * Math.sin(previousAngleOdoReading + deltaAngleOdo * 0.5);//updates X position
+                RobotLog.dd(TAG, "yPosTicks increment: " + ((localY) * Math.sin(previousAngleReading + deltaAngle * 0.5) - (localX) * Math.cos(previousAngleReading + deltaAngle * 0.5)));//updates Y position)
+                RobotLog.dd(TAG, "xPosTicks increment: " + ((localY) * Math.cos(previousAngleReading + deltaAngle * 0.5) + (localX) * Math.sin(previousAngleReading + deltaAngle * 0.5)));//updates X position))
+                RobotLog.dd(TAG, "xPosTicks: " + xPosTicks);
+                RobotLog.dd(TAG, "yPosTicks: " + yPosTicks);
             }
             /*
             double portVelocity=0;
@@ -206,8 +233,10 @@ public class Hardware {
             previousAngleReading = angle;
 
              */
-            double w = (starboardVelo - portVelo)/odoWidth;//inches
-        double localYVelocity = (portVelo + (w*portOffset) + starboardVelo - (w * starboardOffset))/2.0;
+            double w = deltaAngleBodo/((currentTime-prevTime)/1000);//inches
+        integratedAngularVeloTracker+=w*(currentTime-prevTime)/1000;
+        //double localYVelocity = (portVelo + (w*portOffset) + starboardVelo - (w * starboardOffset))/2.0;
+        double localYVelocity = localY*circumfrence/ticks_per_rotation/((currentTime - prevTime)/1000);
         if(updatePID) {
             sixWheelDrive.updatePID(localYVelocity - w * trackWidth / 2, localYVelocity + w * trackWidth / 2);
         }
@@ -250,10 +279,14 @@ public class Hardware {
                     servo.writeRequested = false;
                 }
             }
-            previousLateralReading = lateralReading;
+        RobotLog.dd("MOTORDEBUG", "Left: "+sixWheelDrive.LF.power+ ", Right: "+sixWheelDrive.RF.power);
+        previousLateralReading = lateralReading;
             previousAngleReading = angle;
             previousPortReading = portReading;
             previousStarboardReading = starboardReading;
+            prevTime = currentTime;
+            prevLocalY = localYVelocity;
+            previousAngleOdoReading = angleOdo;
     }
     public double getX(){
         xPosInches = (double)xPosTicks * circumfrence / ticks_per_rotation;
@@ -263,5 +296,16 @@ public class Hardware {
         yPosInches = (double)yPosTicks * circumfrence / ticks_per_rotation;
         return yPosInches;
     }
-
+    public double getXMeters(){
+        return getX() /39.3701;
+    }
+    public double getYMeters(){
+        return getY()/39.3701;
+    }
+    public static HardwareMap getHWmap(){
+        return hwMap;
+    }
+    public static void putHWmap(HardwareMap hardwareMap){
+        hwMap = hardwareMap;
+    }
 }

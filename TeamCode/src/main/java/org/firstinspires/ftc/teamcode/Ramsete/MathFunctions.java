@@ -131,6 +131,11 @@ public class MathFunctions {
         return 2*constantC*Math.sqrt(Math.pow(desiredAngularVelocity,2) + constantB*Math.pow(desiredVelocity,2));
     }
     public static double getAngularVelocityCommand(double desiredVelocity, double desiredAngularVelocity, double headingError, double yError, double constantB, double constantK){
-        return desiredAngularVelocity + constantK * headingError + constantB * desiredVelocity * Math.sin(headingError) / headingError * yError;
+        if(Math.abs(headingError)>0.1) {
+            return desiredAngularVelocity + constantK * headingError + constantB * desiredVelocity * Math.sin(headingError) / headingError * yError;
+        }
+        else{
+            return desiredAngularVelocity + constantK * headingError + constantB * desiredVelocity * yError;
+        }
     }
 }

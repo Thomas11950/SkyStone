@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.Ramsete;
 import java.util.ArrayList;
 
 public class ArcTask extends Task {
-	double angularAccel;
 	double startAngularVelocity;
 	ArrayList<Point> arc;
 	public ArcTask(double timeTaken, double velocity, double acceleration, Point startPos, double startHeading, double startAngularVelocity, double angularAccel, ArrayList<Point> arc) {
@@ -29,5 +28,8 @@ public class ArcTask extends Task {
 	public double getDesiredAngularVelocity(double timeStamp) {
 		return startAngularVelocity + timeStamp * angularAccel;
 	}
-	
+	@Override
+	public boolean isArcTask(){
+		return true;
+	}
 }

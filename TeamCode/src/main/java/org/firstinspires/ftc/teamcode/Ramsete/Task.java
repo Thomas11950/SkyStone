@@ -6,12 +6,14 @@ public class Task {
 	public double acceleration;
 	public Point startPos;
 	public double startHeading;
+	public double angularAccel;
 	public Task(double timeTaken, double velocity, double acceleration, Point startPos, double startHeading) {
 		this.timeTaken = timeTaken;
 		this.velocity = velocity;
 		this.acceleration = acceleration;
 		this.startPos = startPos;
 		this.startHeading = startHeading;
+		angularAccel = 0;
 	}
 	public Point getDesiredPosition(double timeStamp) {
 		double distTravelled = velocity * timeStamp + 0.5 * acceleration * Math.pow(timeStamp, 2);
@@ -25,5 +27,8 @@ public class Task {
 	}
 	public double getDesiredAngularVelocity(double timeStamp) {
 		return 0;
+	}
+	public boolean isArcTask(){
+		return false;
 	}
 }

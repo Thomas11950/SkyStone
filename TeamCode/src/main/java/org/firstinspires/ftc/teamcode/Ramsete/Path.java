@@ -45,17 +45,45 @@ public class Path {
 	            }
 	        }
 	        double powerInitial = Double.parseDouble(powerInitialString);
-	        
-	        int powerFinalPosition = pointInStringFormat.indexOf("PowerFinal:");
-	        String powerFinalString = pointInStringFormat.substring(powerFinalPosition + 11);
-	        for(int i = 0; i < powerFinalString.length(); i++){
-	            if(powerFinalString.substring(i,i+1).equals(" ")){
-	                powerFinalString = powerFinalString.substring(0,i);
-	                i=powerFinalString.length();
-	            }
-	        }
-	        double powerFinal = Double.parseDouble(powerFinalString);
-	        path.add(new Pose(xCoord,yCoord,powerInitial,powerFinal));
+
+			int powerFinalPosition = pointInStringFormat.indexOf("PowerFinal:");
+			double powerFinal;
+			if(powerFinalPosition == -1) {
+				powerFinal = powerInitial;
+			}
+			else {
+				String powerFinalString = pointInStringFormat.substring(powerFinalPosition + 11);
+				for(int i = 0; i < powerFinalString.length(); i++){
+					if(powerFinalString.substring(i,i+1).equals(" ")){
+						powerFinalString = powerFinalString.substring(0,i);
+						i=powerFinalString.length();
+					}
+				}
+				powerFinal = Double.parseDouble(powerFinalString);
+			}
+			double angularAccel = identifyNumberInString(pointInStringFormat, "AngularAccel:");
+			if(angularAccel == -1) {
+				path.add(new Pose(xCoord,yCoord,powerInitial,powerFinal));
+			}
+			else {
+				path.add(new Pose(xCoord,yCoord,powerInitial,powerFinal,angularAccel));
+			}
 	    }
+	}
+	public double identifyNumberInString(String pointInStringFormat, String TAG) {
+		int tagLength = TAG.length();
+		int requestedNumberPosition = pointInStringFormat.indexOf(TAG);
+		System.out.println(requestedNumberPosition);
+		if(requestedNumberPosition == -1) {
+			return -1;
+		}
+		String requestedNumberString = pointInStringFormat.substring(requestedNumberPosition + tagLength);
+		for(int i = 0; i < requestedNumberString.length(); i++){
+			if(requestedNumberString.substring(i,i+1).equals(" ")){
+				requestedNumberString = requestedNumberString.substring(0,i);
+				i=requestedNumberString.length();
+			}
+		}
+		return Double.parseDouble(requestedNumberString);
 	}
 }

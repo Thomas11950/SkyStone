@@ -1,9 +1,14 @@
 package org.firstinspires.ftc.teamcode.Ramsete;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Array;
 import java.sql.Time;
 import java.util.ArrayList;
@@ -11,22 +16,27 @@ import java.util.ArrayList;
 
 
 public class PathEngine{
+	public String TAG = "PathEngineDebug";
 	Path pathToDraw;
 	String pathFileName;
 	public double maxAccel;
-	public double maxAngularAccel= Math.toRadians(0.005);
+	public double maxAngularAccel;
 	public double[] prevIntercept;
 	ArrayList<ArrayList<Point>> arcs;
 	TimeBasedTaskList taskList;
 	org.firstinspires.ftc.teamcode.hardware.Hardware hardware;
-	public PathEngine(double maxAccel, double maxAngularAccel, String pathFileName, Hardware hardware){
+	LinearOpMode parentOP;
+	public PathEngine(double maxAccel, double maxAngularAccel, String pathFileName, Hardware hardware, LinearOpMode parentOP){
 		this.maxAccel = maxAccel;
 		this.maxAngularAccel =maxAngularAccel;
 		this.pathFileName = pathFileName;
 		taskList = new TimeBasedTaskList();
 		this.hardware = hardware;
+		prevIntercept = new double[2];
+		this.parentOP = parentOP;
 	}
 	public void init() {
+		RobotLog.dd(TAG,"debugger works");
 		pathToDraw = new Path(pathFileName);
 		arcs = new ArrayList<ArrayList<Point>>();
 		Double[] angles = new Double[pathToDraw.path.size()-1];
@@ -37,25 +47,27 @@ public class PathEngine{
 		prevIntercept[1] = pathToDraw.path.get(0).Y;
 		for(int i = 0; i < pathToDraw.path.size()-2;i++) {
 			if(Math.abs(MathFunctions.angleFormatting(angles[i]-angles[i+1])) > Math.toRadians(0.1)) {
-				System.out.println("we're now on the " + i +"th arc!");
-				simulateArc arc = new simulateArc(pathToDraw.path.get(i).X, pathToDraw.path.get(i).Y, pathToDraw.path.get(i+1).powerInitial, pathToDraw.path.get(i+1).powerFinal, MathFunctions.angleFormatting(angles[i+1]-angles[i]),angles[i],maxAngularAccel);
+				simulateArc arc;
+				if(pathToDraw.path.get(i+1).angularAccel==null) {
+					arc = new simulateArc(pathToDraw.path.get(i).X, pathToDraw.path.get(i).Y, pathToDraw.path.get(i+1).powerInitial, pathToDraw.path.get(i+1).powerFinal, MathFunctions.angleFormatting(angles[i+1]-angles[i]),angles[i],maxAngularAccel);
+				}
+				else {
+					arc = new simulateArc(pathToDraw.path.get(i).X, pathToDraw.path.get(i).Y, pathToDraw.path.get(i+1).powerInitial, pathToDraw.path.get(i+1).powerFinal, MathFunctions.angleFormatting(angles[i+1]-angles[i]),angles[i],pathToDraw.path.get(i+1).angularAccel);
+				}
 				arc.calculateArc();
 				double[] intercept = new double[2];
 				double arcEndPointX = arc.arc.get(arc.arc.size()-1).X;
 				double arcEndPointY = arc.arc.get(arc.arc.size()-1).Y;
 				if(pathToDraw.path.get(i+1).X != pathToDraw.path.get(i).X && pathToDraw.path.get(i+1).X != pathToDraw.path.get(i+2).X) {
 					double slopeLine1 = 1.0*(pathToDraw.path.get(i+1).Y-pathToDraw.path.get(i).Y)/(pathToDraw.path.get(i+1).X - pathToDraw.path.get(i).X);
-					System.out.println("slopeLine1: "+slopeLine1);
 					double interceptLine1 = arcEndPointY - slopeLine1 * arcEndPointX;
 					double slopeLine2 = 1.0*(pathToDraw.path.get(i+2).Y-pathToDraw.path.get(i+1).Y)/(pathToDraw.path.get(i+2).X - pathToDraw.path.get(i+1).X);
-					System.out.println("slopeLine2: "+slopeLine2);
 					double interceptLine2 = pathToDraw.path.get(i+1).Y - slopeLine2 * pathToDraw.path.get(i+1).X;
 					intercept = MathFunctions.findIntercept(slopeLine1, interceptLine1, slopeLine2, interceptLine2);
 				}
 				else if(pathToDraw.path.get(i+1).X == pathToDraw.path.get(i).X){
 					intercept = new double[2];
 					intercept[0] = arcEndPointX;
-					System.out.println("i+2 X: " + pathToDraw.path.get(i+2).X + ", i+1 X: " + pathToDraw.path.get(i+1).X);
 					double slopeLine2 = (pathToDraw.path.get(i+2).Y-pathToDraw.path.get(i+1).Y)/(pathToDraw.path.get(i+2).X - pathToDraw.path.get(i+1).X);
 					double interceptLine2 = pathToDraw.path.get(i+1).Y - slopeLine2 * pathToDraw.path.get(i+1).X;
 					intercept[1] = slopeLine2 * intercept[0] + interceptLine2;
@@ -67,7 +79,6 @@ public class PathEngine{
 					intercept[0] = pathToDraw.path.get(i+1).X;
 					intercept[1] = slopeLine1 * intercept[0] + interceptLine1;
 				}
-				System.out.println("intercept X: " + intercept[0] + ", intercept Y: " + intercept[1]);
 				double translateX = intercept[0] - arcEndPointX;
 				double translateY = intercept[1] - arcEndPointY;
 				for(Point p: arc.arc) {
@@ -113,25 +124,56 @@ public class PathEngine{
 		prevIntercept[0] = lineEndX;
 		prevIntercept[1] = lineEndY;
 		arcs.add(null);
+		taskList.writeAllData();
 	}
-	public void run(ElapsedTime time, double constantB, double constantC){
+	public void run(ElapsedTime time, double constantB, double constantC) {
 		double startTime = time.milliseconds();
-		while((time.milliseconds() - startTime)/1000 < taskList.getTotalTime()){
+		FileWriter writer;
+		try {
+			 writer = new FileWriter("//sdcard//FIRST//RamseteMotionData.txt");
+		}
+		catch(IOException e){
+			return;
+		}
+		RobotLog.dd(TAG, "right before while loop on run()");
+		while((time.milliseconds() - startTime)/1000 < taskList.getTotalTime()&&!parentOP.isStopRequested() ){
 			double currentTime = (time.milliseconds() - startTime)/1000;
 			MotionData currentMotionData = taskList.getMotionData(currentTime);
-			double xErrorLocal = (currentMotionData.desiredPosition.X - hardware.getX()) * Math.cos(hardware.angle) + (currentMotionData.desiredPosition.Y - hardware.getY()) * Math.sin(hardware.angle);
-			double yErrorLocal = (currentMotionData.desiredPosition.X - hardware.getX()) * -Math.sin(hardware.angle) + (currentMotionData.desiredPosition.Y - hardware.getY()) * Math.cos(hardware.angle);
-			double headingError = currentMotionData.desiredHeading - hardware.angle;
+			currentMotionData.desiredVelocity = currentMotionData.desiredVelocity/39.3701;
+			currentMotionData.desiredPosition.X = currentMotionData.desiredPosition.X/39.3701;
+			currentMotionData.desiredPosition.Y = currentMotionData.desiredPosition.Y/39.3701;
+			double xErrorLocal = (currentMotionData.desiredPosition.X - hardware.getXMeters()) * Math.cos(hardware.angle) + (currentMotionData.desiredPosition.Y - hardware.getYMeters()) * Math.sin(hardware.angle);
+			double yErrorLocal = (currentMotionData.desiredPosition.X - hardware.getXMeters()) * -Math.sin(hardware.angle) + (currentMotionData.desiredPosition.Y - hardware.getYMeters()) * Math.cos(hardware.angle);
+			double headingError = MathFunctions.keepAngleWithin180Degrees(currentMotionData.desiredHeading - hardware.angle);
 			double constantK = MathFunctions.getConstantK(currentMotionData.desiredVelocity, currentMotionData.desiredAngularVelocity,  constantB,  constantC);
 			double angularVelocityCommand = MathFunctions.getAngularVelocityCommand(currentMotionData.desiredVelocity, currentMotionData.desiredAngularVelocity, headingError, yErrorLocal, constantB, constantK);
-			double velocityCommand = MathFunctions.velocityCommand(currentMotionData.desiredVelocity, headingError, xErrorLocal, constantK);
-			hardware.sixWheelDrive.setMotion(velocityCommand,angularVelocityCommand);
-			try{
-				Thread.sleep(50);
+			double velocityCommand = MathFunctions.velocityCommand(currentMotionData.desiredVelocity, headingError, xErrorLocal, constantK)*39.3701;
+			hardware.sixWheelDrive.setMotion(velocityCommand,currentMotionData.accel,angularVelocityCommand, currentMotionData.AngularAccel);
+			hardware.updatePID = true;
+			RobotLog.dd(TAG, "angularoffset1 :" + constantK * headingError +", angularOffset2: "+ constantB*currentMotionData.desiredVelocity*yErrorLocal);
+			RobotLog.dd(TAG, "constantK: " + constantK);
+			RobotLog.dd(TAG, "Ex: " + xErrorLocal + ", Ey: " + yErrorLocal);
+			RobotLog.dd(TAG, "desired Heading: " + currentMotionData.desiredHeading + ", Heading: "+ hardware.angle);
+			RobotLog.dd(TAG,"angularVeloCommand: "+ angularVelocityCommand + ", angularVelo: " + currentMotionData.desiredAngularVelocity);
+			RobotLog.dd(TAG,"veloCommand: " + velocityCommand + ", velo: " +currentMotionData.desiredVelocity);
+			try {
+				writer.write("desired X: " + currentMotionData.desiredPosition.X * 39.3701 + ", desired Y: " + currentMotionData.desiredPosition.Y * 39.3701 + ", current X: " + hardware.xPosInches  + ", current Y: " + hardware.yPosInches +"\n");
 			}
-			catch(InterruptedException e){
+			catch(IOException e){
 				return;
 			}
 		}
+		hardware.updatePID = false;
+		try {
+			writer.close();
+			hardware.sixWheelDrive.left.writer.close();
+			hardware.sixWheelDrive.right.writer.close();
+		}
+		catch(IOException e){
+			return;
+		}
+		hardware.updatePID = false;
+
+		RobotLog.dd(TAG,"existed run()");
 	}
 }

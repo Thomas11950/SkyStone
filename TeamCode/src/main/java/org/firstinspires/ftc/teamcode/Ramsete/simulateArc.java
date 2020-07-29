@@ -45,7 +45,7 @@ public class simulateArc {
 			calculateArcFirstIteration = false;
 		}
 		double accel = (endVelocity - beginVelocity)/(2*turnTime(deltaHeading, maxAngularAccel));
-		double currentTime = prevTime + 0.1;
+		double currentTime = prevTime + 0.005;
 		//System.out.println("currentTime: "+currentTime+", startTime: "+startTime + ", turnTime: "+turnTime(deltaHeading,maxAngularAccel));
 		double deltaTime = currentTime - prevTime;
 		if(currentTime > turnTime(deltaHeading,maxAngularAccel)) {
