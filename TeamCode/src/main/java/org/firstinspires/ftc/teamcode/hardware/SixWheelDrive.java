@@ -17,6 +17,7 @@ public class SixWheelDrive {
     public static double kV=0.174;
     public static double kStatic=1.282;
     public static double kA = 0.0325;
+    public static double kDecel = 0.0325;
     public static double kI = 0.016;
     public static double kVAngularVelo = 1.4;
     public static double kAAngularAccel=0.15;

@@ -126,10 +126,18 @@ public class PathEngine{
 		arcs.add(null);
 		taskList.writeAllData();
 	}
-	public void run(ElapsedTime time, double constantB, double constantC) {
+	public void run(ElapsedTime time, double constantB, double constantC, boolean forward) {
+		if(forward){
+			hardware.setForward();
+		}
+		else{
+			hardware.setBackwards();
+		}
 		double startTime = time.milliseconds();
+		FileWriter writerDesiredKinematics;
 		FileWriter writer;
 		try {
+			writerDesiredKinematics = new FileWriter("//sdcard//FIRST//ramsetedesiredkinematics.txt");
 			 writer = new FileWriter("//sdcard//FIRST//RamseteMotionData.txt");
 		}
 		catch(IOException e){
@@ -142,9 +150,18 @@ public class PathEngine{
 			currentMotionData.desiredVelocity = currentMotionData.desiredVelocity/39.3701;
 			currentMotionData.desiredPosition.X = currentMotionData.desiredPosition.X/39.3701;
 			currentMotionData.desiredPosition.Y = currentMotionData.desiredPosition.Y/39.3701;
-			double xErrorLocal = (currentMotionData.desiredPosition.X - hardware.getXMeters()) * Math.cos(hardware.angle) + (currentMotionData.desiredPosition.Y - hardware.getYMeters()) * Math.sin(hardware.angle);
-			double yErrorLocal = (currentMotionData.desiredPosition.X - hardware.getXMeters()) * -Math.sin(hardware.angle) + (currentMotionData.desiredPosition.Y - hardware.getYMeters()) * Math.cos(hardware.angle);
-			double headingError = MathFunctions.keepAngleWithin180Degrees(currentMotionData.desiredHeading - hardware.angle);
+			double xPosMeters;
+			double yPosMeters;
+			xPosMeters = hardware.getXMeters();
+			yPosMeters = hardware.getYMeters();
+			double currentHeading = hardware.angle;
+			if(!forward){
+				currentMotionData.desiredHeading = currentMotionData.desiredHeading+Math.toRadians(180);
+				currentMotionData.desiredVelocity = -currentMotionData.desiredVelocity;
+			}
+			double xErrorLocal = (currentMotionData.desiredPosition.X - xPosMeters) * Math.cos(currentHeading) + (currentMotionData.desiredPosition.Y - yPosMeters) * Math.sin(currentHeading);
+			double yErrorLocal = (currentMotionData.desiredPosition.X - xPosMeters) * -Math.sin(currentHeading) + (currentMotionData.desiredPosition.Y - yPosMeters) * Math.cos(currentHeading);
+			double headingError = MathFunctions.keepAngleWithin180Degrees(currentMotionData.desiredHeading - currentHeading);
 			double constantK = MathFunctions.getConstantK(currentMotionData.desiredVelocity, currentMotionData.desiredAngularVelocity,  constantB,  constantC);
 			double angularVelocityCommand = MathFunctions.getAngularVelocityCommand(currentMotionData.desiredVelocity, currentMotionData.desiredAngularVelocity, headingError, yErrorLocal, constantB, constantK);
 			double velocityCommand = MathFunctions.velocityCommand(currentMotionData.desiredVelocity, headingError, xErrorLocal, constantK)*39.3701;
@@ -157,6 +174,7 @@ public class PathEngine{
 			RobotLog.dd(TAG,"angularVeloCommand: "+ angularVelocityCommand + ", angularVelo: " + currentMotionData.desiredAngularVelocity);
 			RobotLog.dd(TAG,"veloCommand: " + velocityCommand + ", velo: " +currentMotionData.desiredVelocity);
 			try {
+				writerDesiredKinematics.write("Time: "+currentTime+", Heading: " + currentMotionData.desiredHeading + ", ActualHeading: "+currentHeading + ", CurrentVelo: " + hardware.localYVelocity + ", VeloCommand: " + velocityCommand + ", DesiredVelo: "+currentMotionData.desiredVelocity*39.3701 + ", LateralVelo: " + hardware.localX/hardware.deltaTime+"\n");
 				writer.write("desired X: " + currentMotionData.desiredPosition.X * 39.3701 + ", desired Y: " + currentMotionData.desiredPosition.Y * 39.3701 + ", current X: " + hardware.xPosInches  + ", current Y: " + hardware.yPosInches +"\n");
 			}
 			catch(IOException e){
@@ -165,9 +183,10 @@ public class PathEngine{
 		}
 		hardware.updatePID = false;
 		try {
-			writer.close();
 			hardware.sixWheelDrive.left.writer.close();
 			hardware.sixWheelDrive.right.writer.close();
+			writer.close();
+			writerDesiredKinematics.close();
 		}
 		catch(IOException e){
 			return;

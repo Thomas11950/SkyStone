@@ -66,7 +66,7 @@ public class VelocityPID {
         }
         this.targetVelocity = targetVelocity;
         double currentTime = time.milliseconds();
-        accel = (targetVelocity -prevVelo)/((currentTime - prevTimeAccel)/1000);
+        this.accel = accel;
         prevTimeAccel = currentTime;
         prevVelo = targetVelocity;
         targetAngularVelo = 0;
@@ -78,7 +78,7 @@ public class VelocityPID {
         }
         this.targetVelocity = targetVelocity;
         double currentTime = time.milliseconds();
-        accel = (targetVelocity -prevVelo)/((currentTime - prevTimeAccel)/1000);
+        this.accel = accel;
         prevTimeAccel = currentTime;
         prevVelo = targetVelocity;
         this.targetAngularVelo = targetAngularVelo;

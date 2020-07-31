@@ -6,15 +6,9 @@ import java.util.ArrayList;
 
 public class TimeBasedTaskList {
 	ArrayList<Task> taskList;
-	FileWriter writer;
 	public TimeBasedTaskList() {
 		taskList = new ArrayList<Task>();
-		try {
-			writer = new FileWriter("//sdcard//FIRST//ramsetedesiredkinematics.txt");
-		}
-		catch(IOException e){
-			e.printStackTrace();
-		}
+
 	}
 	public void addTask(Task task) {
 		taskList.add(task);
@@ -34,12 +28,6 @@ public class TimeBasedTaskList {
 				runningTime-=taskList.get(i).timeTaken;
 				MotionData toReturn;
 				toReturn = new MotionData(taskList.get(i).getDesiredHeading(timeStamp-runningTime), taskList.get(i).getDesiredAngularVelocity(timeStamp-runningTime), taskList.get(i).getDesiredPosition(timeStamp - runningTime), taskList.get(i).getDesiredVelocity(timeStamp-runningTime), taskList.get(i).angularAccel,taskList.get(i).acceleration);
-				try {
-					writer.write("Time: " + timeStamp + ", Heading: " + toReturn.desiredHeading);
-				}
-				catch(IOException e){
-					e.printStackTrace();
-				}
 				return toReturn;
 			}
 		}

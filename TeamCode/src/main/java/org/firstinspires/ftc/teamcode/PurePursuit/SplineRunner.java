@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode.PurePursuit;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
 import org.firstinspires.ftc.teamcode.hardware.HardwareThreadInterface;
@@ -15,13 +17,11 @@ public class SplineRunner {
     String fileNameForPoints;
     File fileContainingPoints;
     ArrayList<Pose> spline = new ArrayList<Pose>();
-    HardwareThreadInterface hardwareThreadInterface;
     Hardware hardware;
     LinearOpMode parentOP;
-    public SplineRunner(String fileNameForPoints, HardwareThreadInterface hardwareThreadInterface, LinearOpMode parentOP){
+    public SplineRunner(String fileNameForPoints, Hardware hardware, LinearOpMode parentOP){
         this.parentOP = parentOP;
-        this.hardwareThreadInterface = hardwareThreadInterface;
-        this.hardware = hardwareThreadInterface.hardware;
+        this.hardware = hardware;
         this.fileNameForPoints = fileNameForPoints;
         fileContainingPoints = new File(this.fileNameForPoints);
         Scanner scnr;
@@ -41,7 +41,7 @@ public class SplineRunner {
                     i=xCoordString.length();
                 }
             }
-            double xCoord = Integer.parseInt(xCoordString);
+            double xCoord = Double.parseDouble(xCoordString);
             int yCoordPosition = pointInStringFormat.indexOf("Y:");
             String yCoordString = pointInStringFormat.substring(yCoordPosition + 2);
             for(int i = 0; i < yCoordString.length(); i++){
@@ -50,7 +50,7 @@ public class SplineRunner {
                     i=yCoordString.length();
                 }
             }
-            double yCoord = Integer.parseInt(yCoordString);
+            double yCoord = Double.parseDouble(yCoordString);
             int headingposition = pointInStringFormat.indexOf("Heading:");
             String headingString = pointInStringFormat.substring(headingposition + 8);
             for(int i = 0; i < headingString.length(); i++){
@@ -103,10 +103,10 @@ public class SplineRunner {
             return spline.size()-1;
         }
     }
-    public void start(double endMarginOfError, double lookAheadDist){
+    public void start(double endMarginOfError, double lookAheadDist, Gamepad g){
         boolean splineFinished = false;
         Pose absoluteEndPoint = spline.get(spline.size() - 1);
-        while(!splineFinished && !parentOP.isStopRequested()){
+        while(!splineFinished && !parentOP.isStopRequested() && !g.a){
             double[][] allData = new double[spline.size()-1][3];
             for(int i = 0; i < spline.size() - 1;i++){
                 double[] lineToCurrentPointData = MathFunctions.lineToPointDistanceAndClosestPoint(spline.get(i).X, spline.get(i).Y,spline.get(i+1).X,spline.get(i+1).Y,hardware.getX(),hardware.getY());
@@ -124,7 +124,10 @@ public class SplineRunner {
             double[] targetPoint = getTargetPoint(minDistLine, percentOfCurrentLineTravelled, lookAheadDist);
             double targetX = spline.get((int)targetPoint[0]).X + (spline.get((int)targetPoint[0] + 1).X - spline.get((int)targetPoint[0]).X) * targetPoint[1];
             double targetY = spline.get((int)targetPoint[0]).Y + (spline.get((int)targetPoint[0] + 1).Y - spline.get((int)targetPoint[0]).Y) * targetPoint[1];
-            setPowersForTargetPoint(spline.get(minDistLine), targetX,targetY);
+            setPowersForTargetPoint6wd(spline.get(minDistLine), targetX,targetY);
+            if(Math.hypot(spline.get(spline.size()-1).X - hardware.getX(), spline.get(spline.size()-1).Y - hardware.getY()) < endMarginOfError){
+                splineFinished = true;
+            }
         }
     }
     public double[] getTargetPoint(int currentLine, double percentOfCurrentLineFinished, double lookAheadDist){
@@ -159,7 +162,7 @@ public class SplineRunner {
     public double getLineLength(int linePosition){
         return Math.hypot(spline.get(linePosition).X - spline.get(linePosition + 1).X, spline.get(linePosition).Y - spline.get(linePosition + 1).Y);
     }
-    public void setPowersForTargetPoint(Pose currentPoint, double targetX, double targetY){
+    /*public void setPowersForTargetPoint(Pose currentPoint, double targetX, double targetY){
         double targetAngle = Math.atan2(targetY-hardware.getY(),targetX-hardware.getX());
         double currentHeading = hardware.angle;
         double deltaHeading = MathFunctions.keepAngleWithin180Degrees(targetAngle-currentHeading);
@@ -167,6 +170,15 @@ public class SplineRunner {
         double movementX = currentPoint.translationPower*Math.sin(deltaHeading);
         double deltaHeadingToTurn = MathFunctions.keepAngleWithin180Degrees(currentPoint.heading- currentHeading);
         double turn = Range.clip(deltaHeadingToTurn,-1,1);
-        hardware.mecanumDrive.setPowers(movementX,movementY, turn*currentPoint.rotationPower);
+        hardware.sixWheelDrive.setPowersNonTank(movementY, turn*currentPoint.rotationPower);
+    }*/
+    public void setPowersForTargetPoint6wd(Pose currentPoint, double targetX, double targetY){
+        double targetAngle = Math.atan2(targetY-hardware.getY(),targetX-hardware.getX());
+        double currentHeading = hardware.angle;
+        double deltaHeading = MathFunctions.keepAngleWithin180Degrees(targetAngle-currentHeading);
+        double movementY = 0.6*Math.cos(deltaHeading);
+        RobotLog.dd("PPDEBUG","Movement Y: "+movementY + ", TranslationPower: " + currentPoint.translationPower);
+        double turn = Range.clip(deltaHeading,-1,1);
+        hardware.sixWheelDrive.setPowersNonTank(movementY, turn*0.7);
     }
 }

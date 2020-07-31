@@ -28,7 +28,9 @@ public class Hardware {
     public double angleOdo;
     public double previousAngleOdoReading;
     public List<LynxModule> allHubs;
-    private double centerWheelOffset = 3.847;
+    private double centerWheelOffset;
+    private double centerWheelOffsetBase = 6.2;
+    private double centerWheelOffsetChange = 1.28858;
     public static double trackWidth = 16.037;
     private static double portOffset = 7.674; // inches
     private static double starboardOffset = 8.103; //inches
@@ -45,6 +47,7 @@ public class Hardware {
     private int previousStarboardReading;
     private int previousLateralReading;
     private double previousAngleReading;
+    public double localYVelocity;
     private double prevW;
     private double prevLocalXVelo;
     private double prevLocalYVelo;
@@ -71,7 +74,10 @@ public class Hardware {
     double canglePrev=0;
     public double danglePrev=0;
     public double localY;
+    public double localX;
     public double integratedAngularVeloTracker;
+    public double deltaTime;
+    public boolean currentlyForwardDirection = true;
     public Hardware(HardwareMap hardwareMap){
         updatePID = false;
         this.hardwareMap = hardwareMap;
@@ -102,9 +108,25 @@ public class Hardware {
         sixWheelDrive = new SixWheelDrive(hub1Motors[0],hub1Motors[1],hub1Motors[2],hub1Motors[3],time);
         hub2Motors = new Motor[4];//initialize here
         servos = new RegServo[12];//initialize here
+        setForward();
         putHWmap(hardwareMap);
     }
-
+    public void setForward(){
+        centerWheelOffset = centerWheelOffsetBase+centerWheelOffsetChange;
+        if(!currentlyForwardDirection){
+            xPosTicks+=2*centerWheelOffsetChange*Math.cos(angle);
+            yPosTicks+=2*centerWheelOffsetChange*Math.sin(angle);
+        }
+        currentlyForwardDirection = true;
+    }
+    public void setBackwards(){
+        centerWheelOffset = centerWheelOffsetBase-centerWheelOffsetChange;
+        if(currentlyForwardDirection){
+            xPosTicks-=2*centerWheelOffsetChange*Math.cos(angle);
+            yPosTicks-=2*centerWheelOffsetChange*Math.sin(angle);
+        }
+        currentlyForwardDirection = false;
+    }
     public void loop(){
 
         loops++;
@@ -166,6 +188,7 @@ public class Hardware {
             firstLoop = false;
         }
         double currentTime = time.milliseconds();
+        deltaTime = currentTime-prevTime;
        int PortChange = portReading - previousPortReading;
             int StarboardChange = starboardReading - previousStarboardReading;
         if(ticker%8!=0) {
@@ -177,7 +200,7 @@ public class Hardware {
             double deltaAngleBodo  =  360/363.090869374*360/361.49102385*360/358.47252*360/361.801642105*360/358.753786593*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
             angleOdo +=deltaAngleBodo;
             double localXAlt = lateralReading - previousLateralReading;//-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
-            double localX =  lateralReading - previousLateralReading-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
+             localX =  lateralReading - previousLateralReading-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
 
         /*double localY = (PortChange + (deltaAngle * portOffset * (ticks_per_rotation/circumfrence)) + StarboardChange - (deltaAngle * starboardOffset * (ticks_per_rotation/circumfrence)))/2.0;
  */         double localYAlt = PortChange; //
@@ -236,7 +259,7 @@ public class Hardware {
             double w = deltaAngleBodo/((currentTime-prevTime)/1000);//inches
         integratedAngularVeloTracker+=w*(currentTime-prevTime)/1000;
         //double localYVelocity = (portVelo + (w*portOffset) + starboardVelo - (w * starboardOffset))/2.0;
-        double localYVelocity = localY*circumfrence/ticks_per_rotation/((currentTime - prevTime)/1000);
+         localYVelocity = localY*circumfrence/ticks_per_rotation/((currentTime - prevTime)/1000);
         if(updatePID) {
             sixWheelDrive.updatePID(localYVelocity - w * trackWidth / 2, localYVelocity + w * trackWidth / 2);
         }
