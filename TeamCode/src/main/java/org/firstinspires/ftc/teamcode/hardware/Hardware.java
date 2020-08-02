@@ -29,8 +29,8 @@ public class Hardware {
     public double previousAngleOdoReading;
     public List<LynxModule> allHubs;
     private double centerWheelOffset;
-    private double centerWheelOffsetBase = 6.2;
-    private double centerWheelOffsetChange = 1.28858;
+    private double centerWheelOffsetBase = 4.91142;
+    private double centerWheelOffsetChange = 1.05;
     public static double trackWidth = 16.037;
     private static double portOffset = 7.674; // inches
     private static double starboardOffset = 8.103; //inches
@@ -114,16 +114,16 @@ public class Hardware {
     public void setForward(){
         centerWheelOffset = centerWheelOffsetBase+centerWheelOffsetChange;
         if(!currentlyForwardDirection){
-            xPosTicks+=2*centerWheelOffsetChange*Math.cos(angle);
-            yPosTicks+=2*centerWheelOffsetChange*Math.sin(angle);
+            xPosTicks+=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.cos(angle);
+            yPosTicks+=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.sin(angle);
         }
         currentlyForwardDirection = true;
     }
     public void setBackwards(){
         centerWheelOffset = centerWheelOffsetBase-centerWheelOffsetChange;
         if(currentlyForwardDirection){
-            xPosTicks-=2*centerWheelOffsetChange*Math.cos(angle);
-            yPosTicks-=2*centerWheelOffsetChange*Math.sin(angle);
+            xPosTicks-=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.cos(angle);
+            yPosTicks-=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.sin(angle);
         }
         currentlyForwardDirection = false;
     }

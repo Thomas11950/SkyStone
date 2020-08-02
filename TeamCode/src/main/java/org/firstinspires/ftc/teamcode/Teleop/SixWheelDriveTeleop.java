@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
+import org.firstinspires.ftc.teamcode.hardware.SixWheelDrive;
+
 @TeleOp(name="6wd", group="TeleOp")
 public class SixWheelDriveTeleop extends OpMode {
     Hardware hardware;

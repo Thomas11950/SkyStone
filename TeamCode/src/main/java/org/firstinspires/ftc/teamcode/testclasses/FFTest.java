@@ -20,8 +20,8 @@ public class FFTest extends LinearOpMode {
         double prevTime = time.milliseconds();
         double prevPosition = hardware.hub1Motors[0].motor.getCurrentPosition();
         hardware.hub1Motors[0].readRequested = true;
-        hardware.sixWheelDrive.left.setVelocity(0);
-        hardware.sixWheelDrive.left.setVelocity(0);
+        hardware.sixWheelDrive.left.setVelocity(0,0);
+        hardware.sixWheelDrive.left.setVelocity(0,0);
         double startTime = time.milliseconds();
         double ticker = 0;
 
@@ -34,29 +34,28 @@ public class FFTest extends LinearOpMode {
             return;
         }
         while(!isStopRequested()){
-            hardware.allHubs.get(0).clearBulkCache();
-            double currentPos = hardware.hub1Motors[0].motor.getCurrentPosition();
+            hardware.loop();
             double currentTime = time.milliseconds();
-            double velo = (currentPos - prevPosition)/((currentTime-prevTime)/1000)*Hardware.circumfrence/Hardware.ticks_per_rotation;
-            prevPosition = currentPos;
+            double velo = (hardware.localY)/((currentTime-prevTime)/1000)*Hardware.circumfrence/Hardware.ticks_per_rotation;
+
             prevTime = currentTime;
             if(true){
                 if(currentTime-startTime < 1000) {
                     RobotLog.dd("QFFTESTDEBUG",currentTime - startTime+"");
-                    hardware.sixWheelDrive.left.setVelocity((currentTime - startTime) / 1000 * 60);
-                    hardware.sixWheelDrive.right.setVelocity((currentTime - startTime) / 1000 * 60);
+                    hardware.sixWheelDrive.left.setVelocity((currentTime - startTime) / 1000 * 60,60);
+                    hardware.sixWheelDrive.right.setVelocity((currentTime - startTime) / 1000 * 60,60);
                     requestedV = (currentTime - startTime) / 1000 * 60;
                 }
                 else if(currentTime - startTime < 1500){
-                    hardware.sixWheelDrive.left.setVelocity(60);
-                    hardware.sixWheelDrive.right.setVelocity(60);
+                    hardware.sixWheelDrive.left.setVelocity(60,0);
+                    hardware.sixWheelDrive.right.setVelocity(60,0);
                     requestedV = 60;
                 }
                 else{
 
                     requestedV = 60+((currentTime - startTime) / 1000-1.5) * -60;
-                    hardware.sixWheelDrive.left.setVelocity(requestedV);
-                    hardware.sixWheelDrive.right.setVelocity(requestedV);
+                    hardware.sixWheelDrive.left.setVelocity(requestedV,-60);
+                    hardware.sixWheelDrive.right.setVelocity(requestedV,-60);
                 }
             }
             double leftPower = hardware.sixWheelDrive.left.updatePower(velo);
@@ -75,6 +74,8 @@ public class FFTest extends LinearOpMode {
         }
         try {
             writer.close();
+            hardware.sixWheelDrive.right.writer.close();
+            hardware.sixWheelDrive.left.writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

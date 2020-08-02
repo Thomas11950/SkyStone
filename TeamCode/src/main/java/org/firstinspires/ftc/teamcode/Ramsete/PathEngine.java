@@ -158,6 +158,7 @@ public class PathEngine{
 			if(!forward){
 				currentMotionData.desiredHeading = currentMotionData.desiredHeading+Math.toRadians(180);
 				currentMotionData.desiredVelocity = -currentMotionData.desiredVelocity;
+				currentMotionData.accel = -currentMotionData.accel;
 			}
 			double xErrorLocal = (currentMotionData.desiredPosition.X - xPosMeters) * Math.cos(currentHeading) + (currentMotionData.desiredPosition.Y - yPosMeters) * Math.sin(currentHeading);
 			double yErrorLocal = (currentMotionData.desiredPosition.X - xPosMeters) * -Math.sin(currentHeading) + (currentMotionData.desiredPosition.Y - yPosMeters) * Math.cos(currentHeading);

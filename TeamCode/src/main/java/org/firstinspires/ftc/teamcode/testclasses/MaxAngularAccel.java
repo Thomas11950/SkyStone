@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.testclasses;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
 
@@ -19,7 +20,7 @@ import java.io.IOException;
 public class MaxAngularAccel extends LinearOpMode {
     Hardware hardware;
     String TAG = "feedfowardtuner";
-    public double accelTime = 1000;
+    public double accelTime = 500;
     public void runOpMode(){
         hardware = new Hardware(hardwareMap);
         waitForStart();
@@ -51,7 +52,7 @@ public class MaxAngularAccel extends LinearOpMode {
             prevPos = currentPos;
             RobotLog.dd(TAG, "Velo: " + velocity + ", Power: " + i + ", Accel: "+ accel);
             try {
-                writer.write("Velo: " + velocity + ", Power: " + i + ", Accel: "+ accel + "\n");
+                writer.write("Velo: " + velocity + ", Power: " + i + ", Accel: "+ accel + ", Voltage: " + i*getBatteryVoltage() +"\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -62,5 +63,15 @@ public class MaxAngularAccel extends LinearOpMode {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    public double getBatteryVoltage() {
+        double result = Double.POSITIVE_INFINITY;
+        for (VoltageSensor sensor : hardwareMap.voltageSensor) {
+            double voltage = sensor.getVoltage();
+            if (voltage > 0) {
+                result = Math.min(result, voltage);
+            }
+        }
+        return result;
     }
 }

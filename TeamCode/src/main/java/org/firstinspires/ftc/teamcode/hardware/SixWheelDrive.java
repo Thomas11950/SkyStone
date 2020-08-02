@@ -17,10 +17,10 @@ public class SixWheelDrive {
     public static double kV=0.174;
     public static double kStatic=1.282;
     public static double kA = 0.0325;
-    public static double kDecel = 0.0325;
+    public static double kDecel = 0.0475;
     public static double kI = 0.016;
-    public static double kVAngularVelo = 1.4;
-    public static double kAAngularAccel=0.15;
+    public static double kVAngularVelo = 0;//1.1;
+    public static double kAAngularAccel=0.3;//0.15;
     public static double kStaticAngularVelo = 0;
     public SixWheelDrive (Motor LF, Motor LB, Motor RF, Motor RB, ElapsedTime time){
         this.LF = LF;
@@ -33,8 +33,8 @@ public class SixWheelDrive {
         RB.motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         LF.readRequested = true;
         RF.readRequested = true;
-        left = new VelocityPID(kP, kI, kD, kV, kStatic,kA,kVAngularVelo, kStaticAngularVelo,kAAngularAccel,time, "//sdcard//FIRST//LeftVeloPIDData.txt");
-        right = new VelocityPID(kP, kI, kD, kV, kStatic,kA,kVAngularVelo,kStaticAngularVelo ,kAAngularAccel,time,"//sdcard//FIRST//RightVeloPIDData.txt");
+        left = new VelocityPID(kP, kI, kD, kV, kStatic,kA,kDecel,kVAngularVelo, kStaticAngularVelo,kAAngularAccel,time, "//sdcard//FIRST//LeftVeloPIDData.txt");
+        right = new VelocityPID(kP, kI, kD, kV, kStatic,kA,kDecel,kVAngularVelo,kStaticAngularVelo ,kAAngularAccel,time,"//sdcard//FIRST//RightVeloPIDData.txt");
     }
     public void goStraight(double power){
         LF.motor.setPower(power);

@@ -15,6 +15,7 @@ public class VelocityPID {
     public double kV;
     double kStatic;
     double kA;
+    double kDecel;
     double integral;
     public double targetVelocity;
     ElapsedTime time;
@@ -32,7 +33,7 @@ public class VelocityPID {
     double kStaticAngularVelo;
     double kAAngularAccel;
     double angularAccel;
-    public VelocityPID(double kP, double kI, double kD, double kV, double kStatic, double kA, double kVAngularVelo, double kStaticAngularVelo, double kAAngularAccel, ElapsedTime time, String outputFileName) {
+    public VelocityPID(double kP, double kI, double kD, double kV, double kStatic, double kA, double kDecel, double kVAngularVelo, double kStaticAngularVelo, double kAAngularAccel, ElapsedTime time, String outputFileName) {
         try {
             writer = new FileWriter(outputFileName);
         }
@@ -45,6 +46,7 @@ public class VelocityPID {
         this.kV = kV;
         this.kStatic = kStatic;
         this.kA = kA;
+        this.kDecel = kDecel;
         integral = 0;
         targetVelocity = 0;
         this.time = time;
@@ -102,25 +104,25 @@ public class VelocityPID {
         RobotLog.dd("FFPID","error: "+error + ", AngularAccel: "+angularAccel);
         double toReturn;
         if(targetVelocity < 0){
-            if(targetAngularVelo > 0) {
-                toReturn = error * kP + integral * kI + derivative * kD - kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kA) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage + kStaticAngularVelo / batteryVoltage+kAAngularAccel*angularAccel/batteryVoltage;
+            if((targetVelocity >= 0 && accel > 0) ||(targetVelocity <= 0 && accel < 0)) {
+                toReturn = error * kP + integral * kI + derivative * kD - kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kA) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage + kAAngularAccel * angularAccel / batteryVoltage;
             }
-            else if(targetAngularVelo < 0) {
-                toReturn= error * kP + integral * kI + derivative * kD - kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kA) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage - kStaticAngularVelo / batteryVoltage+kAAngularAccel*angularAccel/batteryVoltage;
+            else if((targetVelocity < 0 && accel > 0)||(targetVelocity > 0 && accel < 0)){
+                toReturn = error * kP + integral * kI + derivative * kD - kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kDecel) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage + kAAngularAccel * angularAccel / batteryVoltage;
             }
             else{
-                toReturn= error * kP + integral * kI + derivative * kD - kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kA) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage+kAAngularAccel*angularAccel/batteryVoltage;
+                toReturn = error * kP + integral * kI + derivative * kD - kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kA) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage + kAAngularAccel * angularAccel / batteryVoltage;
             }
         }
         else{
-            if(targetAngularVelo > 0) {
-                toReturn= error * kP + integral * kI + derivative * kD + kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kA) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage + kStaticAngularVelo / batteryVoltage+kAAngularAccel*angularAccel/batteryVoltage;
+            if((targetVelocity >= 0 && accel > 0) ||(targetVelocity <= 0 && accel < 0)) {
+                toReturn = error * kP + integral * kI + derivative * kD + kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kA) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage + kAAngularAccel * angularAccel / batteryVoltage;
             }
-            else if(targetAngularVelo < 0) {
-                toReturn= error * kP + integral * kI + derivative * kD + kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kA) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage - kStaticAngularVelo / batteryVoltage+kAAngularAccel*angularAccel/batteryVoltage;
+            else if((targetVelocity < 0 && accel > 0)||(targetVelocity > 0 && accel < 0)){
+                toReturn = error * kP + integral * kI + derivative * kD + kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kDecel) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage + kAAngularAccel * angularAccel / batteryVoltage;
             }
             else{
-                toReturn= error * kP + integral * kI + derivative * kD + kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kA) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage+kAAngularAccel*angularAccel/batteryVoltage;
+                toReturn = error * kP + integral * kI + derivative * kD + kStatic / batteryVoltage + (targetVelocity * kV) / batteryVoltage + (accel * kA) / batteryVoltage + kVAngularVelo * targetAngularVelo / batteryVoltage + kAAngularAccel * angularAccel / batteryVoltage;
             }
         }
         try {
@@ -130,7 +132,7 @@ public class VelocityPID {
         }
         return toReturn;
     }
-    public double getBatteryVoltage() {
+    public static double getBatteryVoltage() {
         double result = Double.POSITIVE_INFINITY;
         for (VoltageSensor sensor : Hardware.getHWmap().voltageSensor) {
             double voltage = sensor.getVoltage();
