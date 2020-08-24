@@ -12,16 +12,14 @@ public class SixWheelDriveTeleop extends OpMode {
     public void init(){
         hardware = new Hardware(hardwareMap);
     }
+    public double logistic(double input, double constantB, double constantC){
+        return constantB*(1/(1+Math.pow(Math.E,-constantC*(input-0.6)))) - constantB/2+0.55;
+    }
     public void loop(){
-        double modifier;
-        if(gamepad1.a){
-             modifier = 0.3;
-        }
-        else{
-            modifier = 0;
-        }
-        double leftPower = 0.4*-Math.pow(gamepad1.left_stick_y,3) -modifier;
-        double rightPower = 0.4*-Math.pow(gamepad1.right_stick_y,3) + modifier;
+        double leftAbsValue = Math.abs(gamepad1.left_stick_y);
+        double rightAbsValue = Math.abs(gamepad1.right_stick_y);
+        double leftPower = logistic(leftAbsValue, 1,7.2) * -gamepad2.left_stick_y/leftAbsValue;
+        double rightPower = logistic(rightAbsValue,1,7.2) * -gamepad1.right_stick_y/rightAbsValue;
         hardware.sixWheelDrive.LF.motor.setPower(leftPower);
         hardware.sixWheelDrive.LB.motor.setPower(leftPower);
         hardware.sixWheelDrive.RF.motor.setPower(rightPower);
