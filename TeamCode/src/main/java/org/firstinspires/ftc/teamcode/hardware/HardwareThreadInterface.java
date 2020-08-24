@@ -6,8 +6,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class HardwareThreadInterface extends Thread {
     public Hardware hardware;
     LinearOpMode parentOP;
-    public HardwareThreadInterface(HardwareMap hardwareMap, LinearOpMode parentOP){
-        this.hardware = new Hardware(hardwareMap);
+    public HardwareThreadInterface(Hardware hardware, LinearOpMode parentOP){
+        this.hardware = hardware;
         this.parentOP = parentOP;
     }
     public void run(){

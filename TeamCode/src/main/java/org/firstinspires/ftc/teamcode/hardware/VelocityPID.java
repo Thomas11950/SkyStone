@@ -92,6 +92,7 @@ public class VelocityPID {
             firstUpdatePowerLoop = false;
             prevTime = currentTime;
             startTime = prevTime;
+            prevError = 0;
         }
         double deltaTime = (currentTime - prevTime)/1000;
         prevTime = currentTime;
@@ -99,7 +100,10 @@ public class VelocityPID {
         double deltaError = error-prevError;
         prevError = error;
         integral+=error*deltaTime;
-        double derivative = deltaError / deltaTime;
+        double derivative = 0;
+        if(deltaTime != 0) {
+             derivative = deltaError / deltaTime;
+        }
         double batteryVoltage = getBatteryVoltage();
         RobotLog.dd("FFPID","error: "+error + ", AngularAccel: "+angularAccel);
         double toReturn;
@@ -126,7 +130,7 @@ public class VelocityPID {
             }
         }
         try {
-            writer.write("Time: " + (currentTime-startTime)/1000+", RequestedV: " + targetVelocity + ", Velo: " + currentVelocity+", Power: "+toReturn+ ", "+ "\n");
+            writer.write("Time: " + (currentTime-startTime)/1000+", RequestedV: " + targetVelocity + ", Velo: " + currentVelocity+", Power: "+toReturn+ ", "+ ", FFonlyVoltage: " + (targetVelocity*kV+accel*kA)+ ", Accel: " + accel+ "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -134,7 +138,7 @@ public class VelocityPID {
     }
     public static double getBatteryVoltage() {
         double result = Double.POSITIVE_INFINITY;
-        for (VoltageSensor sensor : Hardware.getHWmap().voltageSensor) {
+        for (VoltageSensor sensor : Hardware.getInstance().hardwareMap.voltageSensor) {
             double voltage = sensor.getVoltage();
             if (voltage > 0) {
                 result = Math.min(result, voltage);

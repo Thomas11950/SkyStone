@@ -12,13 +12,13 @@ public class SixWheelDrive {
     public Motor RB;
     public VelocityPID left;
     public VelocityPID right;
-    public static double kP=0.018;
+    public static double kP=0;//0.018;
     public static double kD=0;
     public static double kV=0.174;
     public static double kStatic=1.282;
     public static double kA = 0.0325;
-    public static double kDecel = 0.0475;
-    public static double kI = 0.016;
+    public static double kDecel = 0.075;
+    public static double kI = 0;//0.016;
     public static double kVAngularVelo = 0;//1.1;
     public static double kAAngularAccel=0.3;//0.15;
     public static double kStaticAngularVelo = 0;

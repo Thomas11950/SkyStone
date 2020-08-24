@@ -20,7 +20,7 @@ import java.util.List;
 
 public class Hardware {
     HardwareMap hardwareMap;
-    static HardwareMap hwMap;
+    static Hardware hw;
     public BNO055IMU imu;
     public BNO055IMU imu2;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -78,9 +78,16 @@ public class Hardware {
     public double integratedAngularVeloTracker;
     public double deltaTime;
     public boolean currentlyForwardDirection = true;
-    public Hardware(HardwareMap hardwareMap){
-        updatePID = false;
+    public double batteryVoltage;
+    public static Telemetry telemetry;
+    public Hardware(HardwareMap hardwareMap, Telemetry telemetry){
         this.hardwareMap = hardwareMap;
+        hw = this;
+        Hardware.telemetry = telemetry;
+        batteryVoltage = VelocityPID.getBatteryVoltage()-SixWheelDrive.kStatic-1;
+        telemetry.addLine("batteryvoltage: "+batteryVoltage);
+        telemetry.update();
+        updatePID = false;
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
@@ -89,6 +96,8 @@ public class Hardware {
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
+        //imu2 = hardwareMap.get(BNO055IMU.class,"imu2");
+        //imu2.initialize(parameters);
         angle = Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
         previousAngleReading = angle;
         allHubs = this.hardwareMap.getAll(LynxModule.class);
@@ -109,7 +118,42 @@ public class Hardware {
         hub2Motors = new Motor[4];//initialize here
         servos = new RegServo[12];//initialize here
         setForward();
-        putHWmap(hardwareMap);
+    }
+    public Hardware(HardwareMap hardwareMap){
+        this.hardwareMap = hardwareMap;
+        hw = this;
+        batteryVoltage = VelocityPID.getBatteryVoltage()-2;
+        updatePID = false;
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+        //imu2 = hardwareMap.get(BNO055IMU.class,"imu2");
+        //imu2.initialize(parameters);
+        angle = Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
+        previousAngleReading = angle;
+        allHubs = this.hardwareMap.getAll(LynxModule.class);
+        for (LynxModule module : allHubs) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
+        hub1Motors = new Motor[4];//initialize here
+        hub1Motors[0] = new Motor( hardwareMap.get(DcMotorEx.class,"LF"));
+        hub1Motors[0].motor.setDirection(DcMotorEx.Direction.FORWARD);
+        hub1Motors[1] = new Motor(hardwareMap.get(DcMotorEx.class,"LB"));
+        hub1Motors[1].motor.setDirection(DcMotorEx.Direction.REVERSE);
+        hub1Motors[2] = new Motor(hardwareMap.get(DcMotorEx.class,"RF"));
+        hub1Motors[2].motor.setDirection(DcMotorEx.Direction.REVERSE);
+        hub1Motors[3] = new Motor(hardwareMap.get(DcMotorEx.class,"RB"));
+        hub1Motors[3].motor.setDirection(DcMotorEx.Direction.FORWARD);
+        time = new ElapsedTime();
+        sixWheelDrive = new SixWheelDrive(hub1Motors[0],hub1Motors[1],hub1Motors[2],hub1Motors[3],time);
+        hub2Motors = new Motor[4];//initialize here
+        servos = new RegServo[12];//initialize here
+        setForward();
     }
     public void setForward(){
         centerWheelOffset = centerWheelOffsetBase+centerWheelOffsetChange;
@@ -132,14 +176,14 @@ public class Hardware {
         loops++;
         double deltaAngle=0;
         double deltaAngleOdo=0;
-        if(ticker % 8 == 0) {
+        if(ticker % 8 == 0||true) {
             double bangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
-            double dangle = 0;// = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
-            double deltaAngle1 = 360/356.851325758*360/359.83265011*MathFunctions.keepAngleWithin180Degrees(bangle - banglePrev);
-            double deltaAngle2 = 360/356.851325758*360/359.83265011*MathFunctions.keepAngleWithin180Degrees(dangle - danglePrev);
+            //double dangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
+            double deltaAngle1 = 360/360.58242287*360/356.851325758*360/359.83265011*MathFunctions.keepAngleWithin180Degrees(bangle - banglePrev);
+            //double deltaAngle2 = 360/359.75*MathFunctions.keepAngleWithin180Degrees(dangle - danglePrev);
             banglePrev = bangle;
-            danglePrev = dangle;
-            angle = deltaAngle1 + canglePrev;
+            //danglePrev = dangle;
+            angle = (deltaAngle1) + canglePrev;
             deltaAngle = angle-previousAngleReading;
             canglePrev = angle;
             ticker = 1;
@@ -191,7 +235,7 @@ public class Hardware {
         deltaTime = currentTime-prevTime;
        int PortChange = portReading - previousPortReading;
             int StarboardChange = starboardReading - previousStarboardReading;
-        if(ticker%8!=0) {
+        if(ticker%8!=0&&false) {
             deltaAngleOdo  =  360/363.090869374*360/361.49102385*360/358.47252*360/361.801642105*360/358.753786593*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
             angle += deltaAngleOdo;
             deltaAngle = deltaAngleOdo;
@@ -325,10 +369,7 @@ public class Hardware {
     public double getYMeters(){
         return getY()/39.3701;
     }
-    public static HardwareMap getHWmap(){
-        return hwMap;
-    }
-    public static void putHWmap(HardwareMap hardwareMap){
-        hwMap = hardwareMap;
+    public static Hardware getInstance(){
+        return hw;
     }
 }

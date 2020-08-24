@@ -10,6 +10,8 @@ import org.firstinspires.ftc.teamcode.hardware.HardwareThreadInterface;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -19,6 +21,8 @@ public class SplineRunner {
     ArrayList<Pose> spline = new ArrayList<Pose>();
     Hardware hardware;
     LinearOpMode parentOP;
+    FileWriter writer;
+
     public SplineRunner(String fileNameForPoints, Hardware hardware, LinearOpMode parentOP){
         this.parentOP = parentOP;
         this.hardware = hardware;
@@ -59,7 +63,7 @@ public class SplineRunner {
                     i=headingString.length();
                 }
             }
-            double heading = Integer.parseInt(headingString);
+            double heading = Double.parseDouble(headingString);
             int translationPowerPosition = pointInStringFormat.indexOf("TranslationPower:");
             String translationPowerString = pointInStringFormat.substring(translationPowerPosition + 17);
             for(int i = 0; i < translationPowerString.length(); i++){
@@ -68,7 +72,7 @@ public class SplineRunner {
                     i=translationPowerString.length();
                 }
             }
-            double translationPower = Double.parseDouble(headingString);
+            double translationPower = Double.parseDouble(translationPowerString);
             int turningPowerPosition = pointInStringFormat.indexOf("TurnPower:");
             String turnPowerString = pointInStringFormat.substring(turningPowerPosition + 10);
             for(int i = 0; i < turnPowerString.length(); i++){
@@ -77,8 +81,15 @@ public class SplineRunner {
                     i=turnPowerString.length();
                 }
             }
-            double turnPower = Double.parseDouble(headingString);
+            double turnPower = Double.parseDouble(turnPowerString);
             spline.add(new Pose(xCoord,yCoord,heading,translationPower,turnPower));
+        }
+        try {
+            writer = new FileWriter("//sdcard//FIRST//RamseteMotionData.txt");
+        }
+        catch(
+                IOException e){
+            return;
         }
     }
     public int getSplinePoint(){
@@ -103,7 +114,7 @@ public class SplineRunner {
             return spline.size()-1;
         }
     }
-    public void start(double endMarginOfError, double lookAheadDist, Gamepad g){
+    public void start(double endMarginOfError, double lookAheadDist, double errorCorrection, Gamepad g){
         boolean splineFinished = false;
         Pose absoluteEndPoint = spline.get(spline.size() - 1);
         while(!splineFinished && !parentOP.isStopRequested() && !g.a){
@@ -124,9 +135,15 @@ public class SplineRunner {
             double[] targetPoint = getTargetPoint(minDistLine, percentOfCurrentLineTravelled, lookAheadDist);
             double targetX = spline.get((int)targetPoint[0]).X + (spline.get((int)targetPoint[0] + 1).X - spline.get((int)targetPoint[0]).X) * targetPoint[1];
             double targetY = spline.get((int)targetPoint[0]).Y + (spline.get((int)targetPoint[0] + 1).Y - spline.get((int)targetPoint[0]).Y) * targetPoint[1];
-            setPowersForTargetPoint6wd(spline.get(minDistLine), targetX,targetY);
+            setPowersForTargetPoint(new Pose(allData[minDistLine][1], allData[minDistLine][2], spline.get(minDistLine).heading,spline.get(minDistLine).translationPower,spline.get(minDistLine).rotationPower), targetX,targetY,errorCorrection);
             if(Math.hypot(spline.get(spline.size()-1).X - hardware.getX(), spline.get(spline.size()-1).Y - hardware.getY()) < endMarginOfError){
                 splineFinished = true;
+            }
+            try {
+                writer.write("desired X: " + spline.get(minDistLine).X  + ", desired Y: " + spline.get(minDistLine).Y + ", current X: " + hardware.xPosInches  + ", current Y: " + hardware.yPosInches +"\n");
+            }
+            catch(IOException e){
+                return;
             }
         }
     }
@@ -162,16 +179,21 @@ public class SplineRunner {
     public double getLineLength(int linePosition){
         return Math.hypot(spline.get(linePosition).X - spline.get(linePosition + 1).X, spline.get(linePosition).Y - spline.get(linePosition + 1).Y);
     }
-    /*public void setPowersForTargetPoint(Pose currentPoint, double targetX, double targetY){
+    public void setPowersForTargetPoint(Pose currentPoint, double targetX, double targetY, double errorCorrection){
         double targetAngle = Math.atan2(targetY-hardware.getY(),targetX-hardware.getX());
         double currentHeading = hardware.angle;
         double deltaHeading = MathFunctions.keepAngleWithin180Degrees(targetAngle-currentHeading);
         double movementY = currentPoint.translationPower*Math.cos(deltaHeading);
         double movementX = currentPoint.translationPower*Math.sin(deltaHeading);
+        double targetAngleToCurrentPathPoint = Math.atan2(currentPoint.Y - hardware.getY(), currentPoint.X-hardware.getX());
+        double deltaHeadingToCurrentPathPoint = MathFunctions.keepAngleWithin180Degrees(targetAngleToCurrentPathPoint-currentHeading);
+        double distanceToCurrentPathPoint = Math.hypot(currentPoint.Y - hardware.getY(), currentPoint.X - hardware.getX());
+        double movementYErrorCorrection = errorCorrection*distanceToCurrentPathPoint*Math.cos(deltaHeadingToCurrentPathPoint);
+        double movementXErrorCorrection = errorCorrection*distanceToCurrentPathPoint*Math.sin(deltaHeadingToCurrentPathPoint);
         double deltaHeadingToTurn = MathFunctions.keepAngleWithin180Degrees(currentPoint.heading- currentHeading);
         double turn = Range.clip(deltaHeadingToTurn,-1,1);
-        hardware.sixWheelDrive.setPowersNonTank(movementY, turn*currentPoint.rotationPower);
-    }*/
+        hardware.mecanumDrive.setPowers(movementX+movementXErrorCorrection,movementY+movementYErrorCorrection,turn);
+    }
     public void setPowersForTargetPoint6wd(Pose currentPoint, double targetX, double targetY){
         double targetAngle = Math.atan2(targetY-hardware.getY(),targetX-hardware.getX());
         double currentHeading = hardware.angle;
