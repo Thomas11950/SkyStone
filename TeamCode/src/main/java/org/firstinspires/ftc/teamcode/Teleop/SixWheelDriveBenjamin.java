@@ -29,7 +29,7 @@ public class SixWheelDriveBenjamin extends OpMode {
         hardware.sixWheelDrive.RF.motor.setPower(rightPower);
         hardware.sixWheelDrive.RB.motor.setPower(rightPower);
     }
-    public double[] setPowers(double forwardsBackPower, double turnPower) {
+    /*public double[] setPowers(double forwardsBackPower, double turnPower) {
         double sum = Math.abs(forwardsBackPower) + Math.abs(turnPower);
         double leftTurn = 0;
         double rightTurn = 0;
@@ -52,5 +52,8 @@ public class SixWheelDriveBenjamin extends OpMode {
                 return new double[]{forwardsBackPower,forwardsBackPower};
             }
         }
+    }*/
+    public double[] setPowers(double forwardBackPower, double turnPower){
+        return new double[]{forwardBackPower + turnPower, forwardBackPower - turnPower};
     }
 }
