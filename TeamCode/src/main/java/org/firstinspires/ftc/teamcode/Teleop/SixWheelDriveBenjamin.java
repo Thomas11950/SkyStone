@@ -18,9 +18,9 @@ public class SixWheelDriveBenjamin extends OpMode {
     }
     public void loop(){
         double translationAbsValue = Math.abs(gamepad1.left_stick_y);
-        double turnAbsValue = Math.abs(gamepad1.right_stick_y);
+        double turnAbsValue = Math.abs(gamepad1.right_stick_x);
         double translation = logistic(translationAbsValue, 1,7.2) * -gamepad1.left_stick_y/translationAbsValue;
-        double turn = logistic(turnAbsValue,1,7.2) * -gamepad1.right_stick_y/turnAbsValue;
+        double turn = logistic(turnAbsValue,1,7.2) * -gamepad1.right_stick_x/turnAbsValue;
         double[] powers = setPowers(translation,turn);
         double leftPower = powers[0];
         double rightPower = powers[1];

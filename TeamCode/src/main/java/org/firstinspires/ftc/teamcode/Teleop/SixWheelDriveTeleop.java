@@ -13,7 +13,7 @@ public class SixWheelDriveTeleop extends OpMode {
         hardware = new Hardware(hardwareMap);
     }
     public double logistic(double input, double constantB, double constantC){
-        return constantB*(1/(1+Math.pow(Math.E,-constantC*(input-0.6)))) - constantB/2+0.55;
+        return constantB*(1/(1+Math.pow(Math.E,-constantC*(input-0.6)))) - constantB/2+0.5532;
     }
     public void loop(){
         double leftAbsValue = Math.abs(gamepad1.left_stick_y);
