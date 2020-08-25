@@ -25,6 +25,7 @@ public class SixWheelDriveTeleop extends OpMode {
         hardware.sixWheelDrive.RF.motor.setPower(rightPower);
         hardware.sixWheelDrive.RB.motor.setPower(rightPower);
         hardware.loop();
+        telemetry.addLine("left Power: " + leftPower + ", right Power: "+rightPower);
         telemetry.addLine("left position: " + hardware.hub1Motors[0].getCurrentPosition() + ", right position: " + hardware.hub1Motors[3].motor.getCurrentPosition() + ", lateral position: " + -hardware.hub1Motors[1].getCurrentPosition());
         telemetry.addLine("angle: "+hardware.angle + ", in degrees: "+Math.toDegrees(hardware.angle) + ", from odo: "+ Math.toDegrees(hardware.angleOdo));
         telemetry.addLine("angle 1: "+hardware.banglePrev + ", angle 2: "+hardware.danglePrev);

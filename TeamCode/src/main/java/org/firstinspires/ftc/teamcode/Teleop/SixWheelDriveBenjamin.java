@@ -1,0 +1,56 @@
+package org.firstinspires.ftc.teamcode.Teleop;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+import org.firstinspires.ftc.teamcode.hardware.Hardware;
+import org.firstinspires.ftc.teamcode.hardware.Motor;
+
+@TeleOp(name="6wd", group="TeleOp")
+public class SixWheelDriveBenjamin extends OpMode {
+    Hardware hardware;
+    public void init(){
+        hardware = new Hardware(hardwareMap);
+    }
+    public double logistic(double input, double constantB, double constantC){
+        return constantB*(1/(1+Math.pow(Math.E,-constantC*(input-0.6)))) - constantB/2+0.55;
+    }
+    public void loop(){
+        double translationAbsValue = Math.abs(gamepad1.left_stick_y);
+        double turnAbsValue = Math.abs(gamepad1.right_stick_y);
+        double translation = logistic(translationAbsValue, 1,7.2) * -gamepad1.left_stick_y/translationAbsValue;
+        double turn = logistic(turnAbsValue,1,7.2) * -gamepad1.right_stick_y/turnAbsValue;
+        double[] powers = setPowers(translation,turn);
+        double leftPower = powers[0];
+        double rightPower = powers[1];
+        hardware.sixWheelDrive.LF.motor.setPower(leftPower);
+        hardware.sixWheelDrive.LB.motor.setPower(leftPower);
+        hardware.sixWheelDrive.RF.motor.setPower(rightPower);
+        hardware.sixWheelDrive.RB.motor.setPower(rightPower);
+    }
+    public double[] setPowers(double forwardsBackPower, double turnPower) {
+        double sum = Math.abs(forwardsBackPower) + Math.abs(turnPower);
+        double leftTurn = 0;
+        double rightTurn = 0;
+        if (sum > 1 || sum < -1) {
+            if (turnPower > 0)
+                leftTurn = turnPower / sum;
+            if (turnPower < 0)
+                rightTurn = turnPower / sum * -1;
+            double leftForward = forwardsBackPower / sum;
+            double rightForward = forwardsBackPower / sum;
+            return new double[]{leftTurn+leftForward,rightTurn+rightForward};
+        } else {
+            if (turnPower > 0) {
+                return new double[]{forwardsBackPower+turnPower,forwardsBackPower};
+            }
+            else if (turnPower < 0) {
+                return new double[]{forwardsBackPower,forwardsBackPower+turnPower};
+            }
+            else{
+                return new double[]{forwardsBackPower,forwardsBackPower};
+            }
+        }
+    }
+}
