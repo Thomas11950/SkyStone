@@ -9,18 +9,34 @@ import org.firstinspires.ftc.teamcode.hardware.SixWheelDrive;
 @TeleOp(name="6wd", group="TeleOp")
 public class SixWheelDriveTeleop extends OpMode {
     Hardware hardware;
+    boolean slowMode;
     public void init(){
         hardware = new Hardware(hardwareMap);
+        slowMode = false;
     }
     public double logistic(double input, double constantB, double constantC){
         return constantB*(1/(1+Math.pow(Math.E,-constantC*(input-0.6)))) - constantB/2+0.5532;
     }
     public void loop(){
-        double leftAbsValue = Math.abs(gamepad1.left_stick_y);
-        double rightAbsValue = Math.abs(gamepad1.right_stick_y);
-        double leftPower = logistic(leftAbsValue, 1,7.2) * -gamepad1.left_stick_y/leftAbsValue;
-        double rightPower = logistic(rightAbsValue,1,7.2) * -gamepad1.right_stick_y/rightAbsValue;
-        hardware.sixWheelDrive.LF.motor.setPower(leftPower);
+        double leftPower;
+        double rightPower;
+        if(gamepad1.left_trigger > 0){
+            slowMode = true;
+        }
+        else{
+            slowMode = false;
+        }
+        if(!slowMode) {
+            double leftAbsValue = Math.abs(gamepad1.left_stick_y);
+            double rightAbsValue = Math.abs(gamepad1.right_stick_y);
+            leftPower = logistic(leftAbsValue, 1, 7.2) * -gamepad1.left_stick_y / leftAbsValue;
+            rightPower = logistic(rightAbsValue, 1, 7.2) * -gamepad1.right_stick_y / rightAbsValue;
+        }
+        else{
+            leftPower = -gamepad1.left_stick_y*0.5;
+            rightPower = -gamepad1.right_stick_y*0.5;
+        }
+         hardware.sixWheelDrive.LF.motor.setPower(leftPower);
         hardware.sixWheelDrive.LB.motor.setPower(leftPower);
         hardware.sixWheelDrive.RF.motor.setPower(rightPower);
         hardware.sixWheelDrive.RB.motor.setPower(rightPower);
