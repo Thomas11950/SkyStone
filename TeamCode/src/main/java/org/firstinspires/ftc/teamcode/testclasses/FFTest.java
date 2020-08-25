@@ -40,22 +40,22 @@ public class FFTest extends LinearOpMode {
 
             prevTime = currentTime;
             if(true){
-                if(currentTime-startTime < 1000) {
+                if(currentTime-startTime < 250) {
                     RobotLog.dd("QFFTESTDEBUG",currentTime - startTime+"");
-                    hardware.sixWheelDrive.left.setVelocity((currentTime - startTime) / 1000 * 60,60);
-                    hardware.sixWheelDrive.right.setVelocity((currentTime - startTime) / 1000 * 60,60);
-                    requestedV = (currentTime - startTime) / 1000 * 60;
+                    hardware.sixWheelDrive.left.setVelocity((currentTime - startTime) / 1000 * 240,240);
+                    hardware.sixWheelDrive.right.setVelocity((currentTime - startTime) / 1000 * 240,240);
+                    requestedV = (currentTime - startTime) / 1000 * 240;
                 }
-                else if(currentTime - startTime < 1500){
+                else if(currentTime - startTime < 500){
                     hardware.sixWheelDrive.left.setVelocity(60,0);
                     hardware.sixWheelDrive.right.setVelocity(60,0);
                     requestedV = 60;
                 }
                 else{
 
-                    requestedV = 60+((currentTime - startTime) / 1000-1.5) * -60;
-                    hardware.sixWheelDrive.left.setVelocity(requestedV,-60);
-                    hardware.sixWheelDrive.right.setVelocity(requestedV,-60);
+                    requestedV = 60+((currentTime - startTime) / 1000-0.5) * -240;
+                    hardware.sixWheelDrive.left.setVelocity(requestedV,-240);
+                    hardware.sixWheelDrive.right.setVelocity(requestedV,-240);
                 }
             }
             double leftPower = hardware.sixWheelDrive.left.updatePower(velo);
