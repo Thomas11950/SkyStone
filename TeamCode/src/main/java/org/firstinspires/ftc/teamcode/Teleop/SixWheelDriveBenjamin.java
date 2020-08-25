@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
 import org.firstinspires.ftc.teamcode.hardware.Motor;
 
-@TeleOp(name="6wd", group="TeleOp")
+@TeleOp(name="6wdArcadeDrive", group="TeleOp")
 public class SixWheelDriveBenjamin extends OpMode {
     Hardware hardware;
     public void init(){
