@@ -3,9 +3,7 @@ package org.firstinspires.ftc.teamcode.hardware;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -14,12 +12,14 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.teamcode.PurePursuit.MathFunctions;
+import org.firstinspires.ftc.teamcode.MathFunctions;
+import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPIDDrivetrain;
+import org.firstinspires.ftc.teamcode.vision.T265;
 
 import java.util.List;
 
 public class Hardware {
-    HardwareMap hardwareMap;
+    public HardwareMap hardwareMap;
     static Hardware hw;
     public BNO055IMU imu;
     public BNO055IMU imu2;
@@ -80,11 +80,12 @@ public class Hardware {
     public boolean currentlyForwardDirection = true;
     public double batteryVoltage;
     public static Telemetry telemetry;
+    public boolean sendT265OdoData;
     public Hardware(HardwareMap hardwareMap, Telemetry telemetry){
         this.hardwareMap = hardwareMap;
         hw = this;
         Hardware.telemetry = telemetry;
-        batteryVoltage = VelocityPID.getBatteryVoltage()-SixWheelDrive.kStatic-1;
+        batteryVoltage = VelocityPIDDrivetrain.getBatteryVoltage()-SixWheelDrive.kStatic-1;
         telemetry.addLine("batteryvoltage: "+batteryVoltage);
         telemetry.update();
         updatePID = false;
@@ -122,7 +123,7 @@ public class Hardware {
     public Hardware(HardwareMap hardwareMap){
         this.hardwareMap = hardwareMap;
         hw = this;
-        batteryVoltage = VelocityPID.getBatteryVoltage()-2;
+        batteryVoltage = VelocityPIDDrivetrain.getBatteryVoltage()-2;
         updatePID = false;
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
@@ -156,20 +157,16 @@ public class Hardware {
         setForward();
     }
     public void setForward(){
-        centerWheelOffset = centerWheelOffsetBase+centerWheelOffsetChange;
-        if(!currentlyForwardDirection){
-            xPosTicks+=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.cos(angle);
-            yPosTicks+=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.sin(angle);
-        }
         currentlyForwardDirection = true;
     }
     public void setBackwards(){
-        centerWheelOffset = centerWheelOffsetBase-centerWheelOffsetChange;
-        if(currentlyForwardDirection){
-            xPosTicks-=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.cos(angle);
-            yPosTicks-=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.sin(angle);
-        }
         currentlyForwardDirection = false;
+    }
+    public void sendT265Odometry(double localX, double localY, double deltaHeading, double deltaTime){
+        double[] T265VeloData = MathFunctions.transposeCoordinate(localX,localY,-T265.localXOffsetCameraToCenter,-T265.localYOffsetCameraToCenter,deltaHeading);
+        T265VeloData[0] = (T265VeloData[0] + T265.localXOffsetCameraToCenter)/deltaTime;
+        T265VeloData[1] = (T265VeloData[1] + T265.localYOffsetCameraToCenter)/deltaTime;
+        T265.slamra.sendOdometry(-T265VeloData[0],-T265VeloData[1]);
     }
     public void loop(){
 
@@ -304,6 +301,9 @@ public class Hardware {
         integratedAngularVeloTracker+=w*(currentTime-prevTime)/1000;
         //double localYVelocity = (portVelo + (w*portOffset) + starboardVelo - (w * starboardOffset))/2.0;
          localYVelocity = localY*circumfrence/ticks_per_rotation/((currentTime - prevTime)/1000);
+         if(sendT265OdoData){
+             sendT265Odometry(localY*circumfrence/ticks_per_rotation,-localX*circumfrence/ticks_per_rotation,deltaAngle,deltaTime);
+         }
         if(updatePID) {
             sixWheelDrive.updatePID(localYVelocity - w * trackWidth / 2, localYVelocity + w * trackWidth / 2);
         }
@@ -356,12 +356,32 @@ public class Hardware {
             previousAngleOdoReading = angleOdo;
     }
     public double getX(){
-        xPosInches = (double)xPosTicks * circumfrence / ticks_per_rotation;
-        return xPosInches;
+        double xPosInches = (double)xPosTicks * circumfrence / ticks_per_rotation;
+        double yPosInches = (double)yPosTicks * circumfrence / ticks_per_rotation;
+        if(currentlyForwardDirection) {
+            this.xPosInches = MathFunctions.transposeCoordinate(xPosInches, yPosInches, centerWheelOffsetChange, angle)[0];
+        }
+        else{
+            this.xPosInches = MathFunctions.transposeCoordinate(xPosInches, yPosInches, -centerWheelOffsetChange, angle)[0];
+        }
+        return this.xPosInches;
     }
     public double getY(){
-        yPosInches = (double)yPosTicks * circumfrence / ticks_per_rotation;
-        return yPosInches;
+        double xPosInches = (double)xPosTicks * circumfrence / ticks_per_rotation;
+        double yPosInches = (double)yPosTicks * circumfrence / ticks_per_rotation;
+        if(currentlyForwardDirection) {
+            this.yPosInches = MathFunctions.transposeCoordinate(xPosInches, yPosInches, centerWheelOffsetChange, angle)[1];
+        }
+        else{
+            this.yPosInches = MathFunctions.transposeCoordinate(xPosInches, yPosInches, -centerWheelOffsetChange, angle)[1];
+        }
+        return this.yPosInches;
+    }
+    public double getXAbsoluteCenter(){
+        return (double)xPosTicks * circumfrence / ticks_per_rotation;
+    }
+    public double getYAbsoluteCenter(){
+        return (double)yPosTicks * circumfrence / ticks_per_rotation;
     }
     public double getXMeters(){
         return getX() /39.3701;

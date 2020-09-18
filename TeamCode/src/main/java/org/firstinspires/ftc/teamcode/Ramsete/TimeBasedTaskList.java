@@ -27,7 +27,7 @@ public class TimeBasedTaskList {
 			if(runningTime > timeStamp) {
 				runningTime-=taskList.get(i).timeTaken;
 				MotionData toReturn;
-				toReturn = new MotionData(taskList.get(i).getDesiredHeading(timeStamp-runningTime), taskList.get(i).getDesiredAngularVelocity(timeStamp-runningTime), taskList.get(i).getDesiredPosition(timeStamp - runningTime), taskList.get(i).getDesiredVelocity(timeStamp-runningTime), taskList.get(i).angularAccel,taskList.get(i).acceleration);
+				toReturn = new MotionData(taskList.get(i).getDesiredHeading(timeStamp-runningTime), taskList.get(i).getDesiredAngularVelocity(timeStamp-runningTime), taskList.get(i).getDesiredPosition(timeStamp - runningTime), taskList.get(i).getDesiredVelocity(timeStamp-runningTime), taskList.get(i).angularAccel,taskList.get(i).getAccel(timeStamp-runningTime));
 				return toReturn;
 			}
 		}

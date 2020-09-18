@@ -1,17 +1,18 @@
 package org.firstinspires.ftc.teamcode.hardware;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
+
+import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPIDDrivetrain;
 
 public class SixWheelDrive {
     public Motor LF;
     public Motor LB;
     public Motor RF;
     public Motor RB;
-    public VelocityPID left;
-    public VelocityPID right;
+    public VelocityPIDDrivetrain left;
+    public VelocityPIDDrivetrain right;
     public static double kP=0;//0.018;
     public static double kD=0;
     public static double kV=0.174;
@@ -33,8 +34,8 @@ public class SixWheelDrive {
         RB.motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         LF.readRequested = true;
         RF.readRequested = true;
-        left = new VelocityPID(kP, kI, kD, kV, kStatic,kA,kDecel,kVAngularVelo, kStaticAngularVelo,kAAngularAccel,time, "//sdcard//FIRST//LeftVeloPIDData.txt");
-        right = new VelocityPID(kP, kI, kD, kV, kStatic,kA,kDecel,kVAngularVelo,kStaticAngularVelo ,kAAngularAccel,time,"//sdcard//FIRST//RightVeloPIDData.txt");
+        left = new VelocityPIDDrivetrain(kP, kI, kD, kV, kStatic,kA,kDecel,kVAngularVelo, kStaticAngularVelo,kAAngularAccel,time, "//sdcard//FIRST//LeftVeloPIDData.txt");
+        right = new VelocityPIDDrivetrain(kP, kI, kD, kV, kStatic,kA,kDecel,kVAngularVelo,kStaticAngularVelo ,kAAngularAccel,time,"//sdcard//FIRST//RightVeloPIDData.txt");
     }
     public void goStraight(double power){
         LF.motor.setPower(power);
@@ -45,12 +46,12 @@ public class SixWheelDrive {
     public void setMotion(double velocity, double accel, double angularVelocity,double angularAccel){
         double rightVelocity = velocity + Hardware.trackWidth/2 * angularVelocity;
         double leftVelocity = velocity - Hardware.trackWidth/2 * angularVelocity;
-        left.setVelocity(leftVelocity,accel,-angularVelocity,-angularAccel);
-        right.setVelocity(rightVelocity,accel,angularVelocity,angularAccel);
+        left.setState(leftVelocity,accel,-angularVelocity,-angularAccel);
+        right.setState(rightVelocity,accel,angularVelocity,angularAccel);
     }
     public void updatePID(double leftVelocityFromOdo, double rightVelocityFromOdo){
-        double leftPower = left.updatePower(leftVelocityFromOdo);
-        double rightPower = right.updatePower(rightVelocityFromOdo);
+        double leftPower = left.updateCurrentStateAndGetOutput(leftVelocityFromOdo);
+        double rightPower = right.updateCurrentStateAndGetOutput(rightVelocityFromOdo);
         if(leftPower > 1){
             leftPower = 1;
         }

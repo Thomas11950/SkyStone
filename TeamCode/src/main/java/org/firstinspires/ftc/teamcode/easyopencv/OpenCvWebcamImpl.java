@@ -36,7 +36,7 @@ package org.firstinspires.ftc.teamcode.easyopencv;
 
 import android.graphics.ImageFormat;
 import android.sax.StartElementListener;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.qualcomm.robotcore.util.RobotLog;
 

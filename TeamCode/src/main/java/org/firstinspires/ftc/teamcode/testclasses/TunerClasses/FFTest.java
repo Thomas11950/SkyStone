@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.testclasses;
+package org.firstinspires.ftc.teamcode.testclasses.TunerClasses;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -20,8 +20,8 @@ public class FFTest extends LinearOpMode {
         double prevTime = time.milliseconds();
         double prevPosition = hardware.hub1Motors[0].motor.getCurrentPosition();
         hardware.hub1Motors[0].readRequested = true;
-        hardware.sixWheelDrive.left.setVelocity(0,0);
-        hardware.sixWheelDrive.left.setVelocity(0,0);
+        hardware.sixWheelDrive.left.setState(0,0);
+        hardware.sixWheelDrive.left.setState(0,0);
         double startTime = time.milliseconds();
         double ticker = 0;
 
@@ -42,31 +42,31 @@ public class FFTest extends LinearOpMode {
             if(true){
                 if(currentTime-startTime < 250) {
                     RobotLog.dd("QFFTESTDEBUG",currentTime - startTime+"");
-                    hardware.sixWheelDrive.left.setVelocity((currentTime - startTime) / 1000 * 240,240);
-                    hardware.sixWheelDrive.right.setVelocity((currentTime - startTime) / 1000 * 240,240);
+                    hardware.sixWheelDrive.left.setState((currentTime - startTime) / 1000 * 240,240);
+                    hardware.sixWheelDrive.right.setState((currentTime - startTime) / 1000 * 240,240);
                     requestedV = (currentTime - startTime) / 1000 * 240;
                 }
                 else if(currentTime - startTime < 500){
-                    hardware.sixWheelDrive.left.setVelocity(60,0);
-                    hardware.sixWheelDrive.right.setVelocity(60,0);
+                    hardware.sixWheelDrive.left.setState(60,0);
+                    hardware.sixWheelDrive.right.setState(60,0);
                     requestedV = 60;
                 }
                 else{
 
                     requestedV = 60+((currentTime - startTime) / 1000-0.5) * -240;
-                    hardware.sixWheelDrive.left.setVelocity(requestedV,-240);
-                    hardware.sixWheelDrive.right.setVelocity(requestedV,-240);
+                    hardware.sixWheelDrive.left.setState(requestedV,-240);
+                    hardware.sixWheelDrive.right.setState(requestedV,-240);
                 }
             }
-            double leftPower = hardware.sixWheelDrive.left.updatePower(velo);
+            double leftPower = hardware.sixWheelDrive.left.updateCurrentStateAndGetOutput(velo);
             hardware.sixWheelDrive.LB.motor.setPower(leftPower);
             hardware.sixWheelDrive.LF.motor.setPower(leftPower);
-            double rightPower = hardware.sixWheelDrive.right.updatePower(velo);
+            double rightPower = hardware.sixWheelDrive.right.updateCurrentStateAndGetOutput(velo);
             hardware.sixWheelDrive.RB.motor.setPower(rightPower);
             hardware.sixWheelDrive.RF.motor.setPower(rightPower);
-            RobotLog.dd("EFFTEST","Time: " + (currentTime-startTime)/1000+", RequestedV: " + requestedV + ", Velo: " + velo + ", outputPower: "+leftPower + " and " + rightPower + ", targetVelo: " + hardware.sixWheelDrive.right.targetVelocity + ", kV: " + hardware.sixWheelDrive.left.kV);
+            RobotLog.dd("EFFTEST","Time: " + (currentTime-startTime)/1000+", RequestedV: " + requestedV + ", Velo: " + velo + ", outputPower: "+leftPower + " and " + rightPower + ", targetVelo: " + hardware.sixWheelDrive.right.desiredState + ", kV: " + hardware.sixWheelDrive.left.kV);
             try {
-                writer.write("Time: " + (currentTime-startTime)/1000+", RequestedV: " + requestedV + ", Velo: " + velo + ", outputPower: "+leftPower + " and " + rightPower + ", targetVelo: " + hardware.sixWheelDrive.right.targetVelocity + ", kV: " + hardware.sixWheelDrive.left.kV + "\n");
+                writer.write("Time: " + (currentTime-startTime)/1000+", RequestedV: " + requestedV + ", Velo: " + velo + ", outputPower: "+leftPower + " and " + rightPower + ", targetVelo: " + hardware.sixWheelDrive.right.desiredState + ", kV: " + hardware.sixWheelDrive.left.kV + "\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }

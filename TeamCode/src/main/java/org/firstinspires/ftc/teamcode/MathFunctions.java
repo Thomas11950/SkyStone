@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.PurePursuit;
+package org.firstinspires.ftc.teamcode;
 
 import java.util.ArrayList;
 
@@ -116,5 +116,37 @@ public class MathFunctions {
     }
     public static double findPercentageOfCurrentLineTravelled(double startPointX, double startPointY, double endPointX, double endPointY, double setPointX, double setPointY){
         return Math.hypot(setPointX - startPointX, setPointY-startPointY)/Math.hypot(endPointX-startPointX,endPointY-startPointY);
+    }
+
+    public static double velocityCommand(double desiredVelocity, double headingError, double xError, double constantK){
+        return desiredVelocity*Math.cos(headingError) + constantK * xError;
+    }
+    public static double getConstantK(double desiredVelocity, double desiredAngularVelocity, double constantB, double constantC){
+        return 2*constantC*Math.sqrt(Math.pow(desiredAngularVelocity,2) + constantB*Math.pow(desiredVelocity,2));
+    }
+    public static double getAngularVelocityCommand(double desiredVelocity, double desiredAngularVelocity, double headingError, double yError, double constantB, double constantK){
+        if(Math.abs(headingError)>0.1) {
+            return desiredAngularVelocity + constantK * headingError + constantB * desiredVelocity * Math.sin(headingError) / headingError * yError;
+        }
+        else{
+            return desiredAngularVelocity + constantK * headingError + constantB * desiredVelocity * yError;
+        }
+    }
+
+    public static double angleFormatting(double angle) {
+        if(angle > Math.toRadians(180)) {
+            angle -= Math.toRadians(360);
+        }
+        if(angle < Math.toRadians(-180)) {
+            angle += Math.toRadians(360);
+        }
+        return angle;
+    }
+
+    public static double[] transposeCoordinate(double originalX, double originalY, double transposeDistance, double heading){
+        return new double[]{originalX + transposeDistance*Math.cos(heading),originalY+transposeDistance*Math.sin(heading)};
+    }
+    public static double[] transposeCoordinate(double originalX, double originalY, double localXFromOriginalToTarget, double localYFromOriginalToTarget, double heading){
+        return new double[]{originalX + localXFromOriginalToTarget * Math.cos(heading)-localYFromOriginalToTarget*Math.sin(heading),originalY + localXFromOriginalToTarget*Math.sin(heading) + localYFromOriginalToTarget*Math.cos(heading) };
     }
 }

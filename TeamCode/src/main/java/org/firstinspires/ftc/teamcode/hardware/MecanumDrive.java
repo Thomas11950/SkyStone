@@ -16,40 +16,46 @@ public class MecanumDrive {
         double LBpower = movementY-turnMagnitude+movementX;
         double RFpower = movementY+turnMagnitude+movementX;
         double RBpower = movementY+turnMagnitude-movementX;
-        double largestPower = LFpower;
-        if(LBpower > LFpower)
-            largestPower = LBpower;
-        if(RFpower > LBpower)
-            largestPower = RFpower;
-        if(RBpower > RFpower){
-            largestPower = RBpower;
+        double largestPower = Math.abs(LFpower);
+        if(Math.abs(LBpower) > Math.abs(LFpower))
+            largestPower = Math.abs(LBpower);
+        if(Math.abs(RFpower) > Math.abs(LBpower))
+            largestPower = Math.abs(RFpower);
+        if(Math.abs(RBpower) > Math.abs(RFpower)){
+            largestPower = Math.abs(RBpower);
         }
-        LFpower = LFpower / largestPower;
-        LBpower = LBpower / largestPower;
-        RFpower = RFpower / largestPower;
-        RBpower = RBpower / largestPower;
+        if(largestPower>1) {
+            LFpower = LFpower / largestPower;
+            LBpower = LBpower / largestPower;
+            RFpower = RFpower / largestPower;
+            RBpower = RBpower / largestPower;
+        }
         LF.setPower(LFpower);
         LB.setPower(LBpower);
         RF.setPower(RFpower);
         RB.setPower(RBpower);
     }
     public void setPowersTeleop(double movementX, double movementY, double turnMagnitude){
+        HardwareMecanum.telemetry.addData("movementY: ",movementY);
+        HardwareMecanum.telemetry.update();
         double LFpower = movementY-turnMagnitude-movementX;
         double LBpower = movementY-turnMagnitude+movementX;
         double RFpower = movementY+turnMagnitude+movementX;
         double RBpower = movementY+turnMagnitude-movementX;
-        double largestPower = LFpower;
-        if(LBpower > LFpower)
-            largestPower = LBpower;
-        if(RFpower > LBpower)
-            largestPower = RFpower;
-        if(RBpower > RFpower){
-            largestPower = RBpower;
+        /*double largestPower = Math.abs(LFpower);
+        if(Math.abs(LBpower) > Math.abs(LFpower))
+            largestPower = Math.abs(LBpower);
+        if(Math.abs(RFpower) > Math.abs(LBpower))
+            largestPower = Math.abs(RFpower);
+        if(Math.abs(RBpower) > Math.abs(RFpower)){
+            largestPower = Math.abs(RBpower);
         }
-        LFpower = LFpower / largestPower;
-        LBpower = LBpower / largestPower;
-        RFpower = RFpower / largestPower;
-        RBpower = RBpower / largestPower;
+        if(largestPower > 1) {
+            LFpower = LFpower / largestPower;
+            LBpower = LBpower / largestPower;
+            RFpower = RFpower / largestPower;
+            RBpower = RBpower / largestPower;
+        }*/
         LF.motor.setPower(LFpower);
         LB.motor.setPower(LBpower);
         RF.motor.setPower(RFpower);

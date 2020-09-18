@@ -3,10 +3,9 @@ package org.firstinspires.ftc.teamcode.PurePursuit;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
-import com.qualcomm.robotcore.util.RobotLog;
 
-import org.firstinspires.ftc.teamcode.hardware.Hardware;
-import org.firstinspires.ftc.teamcode.hardware.HardwareThreadInterface;
+import org.firstinspires.ftc.teamcode.MathFunctions;
+import org.firstinspires.ftc.teamcode.hardware.HardwareMecanum;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,15 +14,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class SplineRunner {
+public class PPrunner {
     String fileNameForPoints;
     File fileContainingPoints;
     ArrayList<Pose> spline = new ArrayList<Pose>();
-    Hardware hardware;
+    HardwareMecanum hardware;
     LinearOpMode parentOP;
     FileWriter writer;
 
-    public SplineRunner(String fileNameForPoints, Hardware hardware, LinearOpMode parentOP){
+    public PPrunner(String fileNameForPoints, HardwareMecanum hardware, LinearOpMode parentOP){
         this.parentOP = parentOP;
         this.hardware = hardware;
         this.fileNameForPoints = fileNameForPoints;
@@ -82,7 +81,7 @@ public class SplineRunner {
                 }
             }
             double turnPower = Double.parseDouble(turnPowerString);
-            spline.add(new Pose(xCoord,yCoord,heading,translationPower,turnPower));
+            spline.add(new Pose(xCoord,yCoord,Math.toRadians(heading),translationPower,turnPower));
         }
         try {
             writer = new FileWriter("//sdcard//FIRST//RamseteMotionData.txt");
@@ -140,11 +139,18 @@ public class SplineRunner {
                 splineFinished = true;
             }
             try {
-                writer.write("desired X: " + spline.get(minDistLine).X  + ", desired Y: " + spline.get(minDistLine).Y + ", current X: " + hardware.xPosInches  + ", current Y: " + hardware.yPosInches +"\n");
+                writer.write("desired X: " + spline.get(minDistLine).X  + ", desired Y: " + spline.get(minDistLine).Y + ", current X: " + hardware.getX()  + ", current Y: " + hardware.getY() +"\n");
             }
             catch(IOException e){
                 return;
             }
+            parentOP.sleep(5);
+        }
+        try {
+            writer.close();
+        }
+        catch(IOException e){
+            return;
         }
     }
     public double[] getTargetPoint(int currentLine, double percentOfCurrentLineFinished, double lookAheadDist){
@@ -191,16 +197,7 @@ public class SplineRunner {
         double movementYErrorCorrection = errorCorrection*distanceToCurrentPathPoint*Math.cos(deltaHeadingToCurrentPathPoint);
         double movementXErrorCorrection = errorCorrection*distanceToCurrentPathPoint*Math.sin(deltaHeadingToCurrentPathPoint);
         double deltaHeadingToTurn = MathFunctions.keepAngleWithin180Degrees(currentPoint.heading- currentHeading);
-        double turn = Range.clip(deltaHeadingToTurn,-1,1);
+        double turn = currentPoint.rotationPower*Range.clip(deltaHeadingToTurn,-1,1);
         hardware.mecanumDrive.setPowers(movementX+movementXErrorCorrection,movementY+movementYErrorCorrection,turn);
-    }
-    public void setPowersForTargetPoint6wd(Pose currentPoint, double targetX, double targetY){
-        double targetAngle = Math.atan2(targetY-hardware.getY(),targetX-hardware.getX());
-        double currentHeading = hardware.angle;
-        double deltaHeading = MathFunctions.keepAngleWithin180Degrees(targetAngle-currentHeading);
-        double movementY = 0.6*Math.cos(deltaHeading);
-        RobotLog.dd("PPDEBUG","Movement Y: "+movementY + ", TranslationPower: " + currentPoint.translationPower);
-        double turn = Range.clip(deltaHeading,-1,1);
-        hardware.sixWheelDrive.setPowersNonTank(movementY, turn*0.7);
     }
 }
