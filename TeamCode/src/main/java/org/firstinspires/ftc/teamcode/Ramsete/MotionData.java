@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.Ramsete;
 
-import org.firstinspires.ftc.teamcode.testclasses.MaxAngularAccel;
-
 public class MotionData {
 	public double desiredHeading;
 	public double desiredAngularVelocity;

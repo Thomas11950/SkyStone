@@ -18,7 +18,7 @@ public class FeedForwardTuner extends LinearOpMode {
     Hardware hardware;
     String TAG = "feedfowardtuner";
     public void runOpMode(){
-        hardware = new Hardware(hardwareMap);
+        hardware = new Hardware(hardwareMap,telemetry);
         waitForStart();
         double prevVelo = hardware.hub1Motors[0].motor.getVelocity(AngleUnit.RADIANS) *(Hardware.circumfrence/(2*Math.PI));
         FileWriter writer;

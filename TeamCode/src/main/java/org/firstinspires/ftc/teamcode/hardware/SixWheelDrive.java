@@ -28,10 +28,6 @@ public class SixWheelDrive {
         this.LB = LB;
         this.RF = RF;
         this.RB = RB;
-        LF.motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        LB.motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        RF.motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        RB.motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         LF.readRequested = true;
         RF.readRequested = true;
         left = new VelocityPIDDrivetrain(kP, kI, kD, kV, kStatic,kA,kDecel,kVAngularVelo, kStaticAngularVelo,kAAngularAccel,time, "//sdcard//FIRST//LeftVeloPIDData.txt");

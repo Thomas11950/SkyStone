@@ -13,7 +13,7 @@ public class AngularVeloControllerTest extends LinearOpMode {
     Hardware hardware;
     String TAG = "feedfowardtuner";
     public void runOpMode(){
-        hardware = new Hardware(hardwareMap);
+        hardware = new Hardware(hardwareMap,telemetry);
         waitForStart();
         hardware.updatePID = true;
         double prevAngle = 0;

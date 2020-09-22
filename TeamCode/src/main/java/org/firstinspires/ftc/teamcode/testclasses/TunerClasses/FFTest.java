@@ -14,7 +14,7 @@ import java.io.IOException;
 @TeleOp(name="FFTest", group="TeleOp")
 public class FFTest extends LinearOpMode {
     public void runOpMode(){
-        Hardware hardware = new Hardware(hardwareMap);
+        Hardware hardware = new Hardware(hardwareMap,telemetry);
         ElapsedTime time = new ElapsedTime();
         waitForStart();
         double prevTime = time.milliseconds();

@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.hardware.Motor;
 public class SixWheelDriveBenjamin extends OpMode {
     Hardware hardware;
     public void init(){
-        hardware = new Hardware(hardwareMap);
+        hardware = new Hardware(hardwareMap,telemetry);
     }
     public double logistic(double input, double constantB, double constantC){
         return constantB*(1/(1+Math.pow(Math.E,-constantC*(input-0.6)))) - constantB/2+0.55;

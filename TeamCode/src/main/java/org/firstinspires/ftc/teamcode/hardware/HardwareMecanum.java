@@ -3,9 +3,7 @@ package org.firstinspires.ftc.teamcode.hardware;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -15,14 +13,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.teamcode.MathFunctions;
-import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPIDDrivetrain;
 import org.firstinspires.ftc.teamcode.vision.T265;
 
 import java.util.List;
 
-public class Hardware {
-    public HardwareMap hardwareMap;
-    static Hardware hw;
+public class HardwareMecanum {
+    HardwareMap hardwareMap;
+    static HardwareMecanum hw;
     public BNO055IMU imu;
     public BNO055IMU imu2;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -30,12 +27,12 @@ public class Hardware {
     public double angleOdo;
     public double previousAngleOdoReading;
     public List<LynxModule> allHubs;
-    private double centerWheelOffset = 4.91142;
-
-    private double centerWheelOffsetChange = 1.05;
-    public static double trackWidth = 16.037;
-    private static double portOffset = 7.674; // inches
-    private static double starboardOffset = 8.103; //inches
+    private double centerWheelOffset;
+    private double centerWheelOffsetBase = 5.23;
+    private double centerWheelOffsetChange = 0;
+    public static double trackWidth = 13.781;
+    private static double portOffset = 6.532; // inches
+    private static double starboardOffset = 6.985; //inches
     public static double odoWidth =portOffset+starboardOffset;
     public double xPosTicks = 0;
     public double yPosTicks = 0;
@@ -43,12 +40,14 @@ public class Hardware {
     public double yPosInches = 0;
     public double yPosTicksAlt=0;
     public double xPosTicksAlt=0;
+    public double yPosTicksAlt2=0;
+    public double xPosTicksAlt2=0;
     public double xPosTicksAltAlt = 0;
     public double yPosTicksAltAlt = 0;
-    private int previousPortReading;
-    private int previousStarboardReading;
-    private int previousLateralReading;
-    private double previousAngleReading;
+    public int previousPortReading;
+    public int previousStarboardReading;
+    public int previousLateralReading;
+    public double previousAngleReading;
     public double localYVelocity;
     private double prevW;
     private double prevLocalXVelo;
@@ -63,7 +62,6 @@ public class Hardware {
     public Motor[] hub2Motors;
     public RegServo[] servos;
     public MecanumDrive mecanumDrive;
-    public SixWheelDrive sixWheelDrive;
     public ElapsedTime time;
     public int loops = 0;
     public boolean firstLoop = true;
@@ -82,12 +80,12 @@ public class Hardware {
     public boolean currentlyForwardDirection = true;
     public double batteryVoltage;
     public static Telemetry telemetry;
-    public boolean sendT265OdoData;
-    public Hardware(HardwareMap hardwareMap, Telemetry telemetry){
+    public double angle1 = 0;
+    public double angle2 = 0;
+    public HardwareMecanum(HardwareMap hardwareMap, Telemetry telemetry){
         this.hardwareMap = hardwareMap;
         hw = this;
-        Hardware.telemetry = telemetry;
-        batteryVoltage = VelocityPIDDrivetrain.getBatteryVoltage()-SixWheelDrive.kStatic-1;
+        HardwareMecanum.telemetry = telemetry;
         telemetry.addLine("batteryvoltage: "+batteryVoltage);
         telemetry.update();
         updatePID = false;
@@ -99,8 +97,8 @@ public class Hardware {
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
-        //imu2 = hardwareMap.get(BNO055IMU.class,"imu2");
-        //imu2.initialize(parameters);
+        imu2 = hardwareMap.get(BNO055IMU.class,"imu2");
+        imu2.initialize(parameters);
         angle = Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
         previousAngleReading = angle;
         allHubs = this.hardwareMap.getAll(LynxModule.class);
@@ -109,47 +107,7 @@ public class Hardware {
         }
         hub1Motors = new Motor[4];//initialize here
         hub1Motors[0] = new Motor( hardwareMap.get(DcMotorEx.class,"LF"));
-        hub1Motors[0].motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         hub1Motors[0].motor.setDirection(DcMotorEx.Direction.REVERSE);
-        hub1Motors[1] = new Motor(hardwareMap.get(DcMotorEx.class,"LB"));
-        hub1Motors[1].motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        hub1Motors[1].motor.setDirection(DcMotorEx.Direction.FORWARD);
-        hub1Motors[2] = new Motor(hardwareMap.get(DcMotorEx.class,"RF"));
-        hub1Motors[2].motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        hub1Motors[2].motor.setDirection(DcMotorEx.Direction.FORWARD);
-        hub1Motors[3] = new Motor(hardwareMap.get(DcMotorEx.class,"RB"));
-        hub1Motors[3].motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        hub1Motors[3].motor.setDirection(DcMotorEx.Direction.REVERSE);
-        time = new ElapsedTime();
-        sixWheelDrive = new SixWheelDrive(hub1Motors[0],hub1Motors[1],hub1Motors[2],hub1Motors[3],time);
-        hub2Motors = new Motor[4];//initialize here
-        servos = new RegServo[12];//initialize here
-        setForward();
-    }
-    /*public Hardware(HardwareMap hardwareMap){
-        this.hardwareMap = hardwareMap;
-        hw = this;
-        batteryVoltage = VelocityPIDDrivetrain.getBatteryVoltage()-2;
-        updatePID = false;
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled      = true;
-        parameters.loggingTag          = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
-        //imu2 = hardwareMap.get(BNO055IMU.class,"imu2");
-        //imu2.initialize(parameters);
-        angle = Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
-        previousAngleReading = angle;
-        allHubs = this.hardwareMap.getAll(LynxModule.class);
-        for (LynxModule module : allHubs) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
-        }
-        hub1Motors = new Motor[4];//initialize here
-        hub1Motors[0] = new Motor( hardwareMap.get(DcMotorEx.class,"LF"));
-        hub1Motors[0].motor.setDirection(DcMotorEx.Direction.FORWARD);
         hub1Motors[1] = new Motor(hardwareMap.get(DcMotorEx.class,"LB"));
         hub1Motors[1].motor.setDirection(DcMotorEx.Direction.REVERSE);
         hub1Motors[2] = new Motor(hardwareMap.get(DcMotorEx.class,"RF"));
@@ -157,36 +115,43 @@ public class Hardware {
         hub1Motors[3] = new Motor(hardwareMap.get(DcMotorEx.class,"RB"));
         hub1Motors[3].motor.setDirection(DcMotorEx.Direction.FORWARD);
         time = new ElapsedTime();
-        sixWheelDrive = new SixWheelDrive(hub1Motors[0],hub1Motors[1],hub1Motors[2],hub1Motors[3],time);
         hub2Motors = new Motor[4];//initialize here
         servos = new RegServo[12];//initialize here
         setForward();
-    }*/
+        mecanumDrive = new MecanumDrive(hub1Motors[0],hub1Motors[1],hub1Motors[2],hub1Motors[3]);
+
+    }
     public void setForward(){
+        centerWheelOffset = centerWheelOffsetBase+centerWheelOffsetChange;
+        if(!currentlyForwardDirection){
+            xPosTicks+=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.cos(angle);
+            yPosTicks+=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.sin(angle);
+        }
         currentlyForwardDirection = true;
     }
     public void setBackwards(){
+        centerWheelOffset = centerWheelOffsetBase-centerWheelOffsetChange;
+        if(currentlyForwardDirection){
+            xPosTicks-=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.cos(angle);
+            yPosTicks-=2*centerWheelOffsetChange*ticks_per_rotation/circumfrence*Math.sin(angle);
+        }
         currentlyForwardDirection = false;
-    }
-    public void sendT265Odometry(double localX, double localY, double deltaHeading, double deltaTime){
-        double[] T265VeloData = MathFunctions.transposeCoordinate(localX,localY,-T265.localXOffsetCameraToCenter,-T265.localYOffsetCameraToCenter,deltaHeading);
-        T265VeloData[0] = (T265VeloData[0] + T265.localXOffsetCameraToCenter)*0.0254/deltaTime;
-        T265VeloData[1] = (T265VeloData[1] + T265.localYOffsetCameraToCenter)*0.0254/deltaTime;
-        T265.slamra.sendOdometry(T265VeloData[0],T265VeloData[1]);
     }
     public void loop(){
 
         loops++;
         double deltaAngle=0;
         double deltaAngleOdo=0;
-        if(ticker % 8 == 0||true) {
+        if(ticker % 8 == 0) {
             double bangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
-            //double dangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
-            double deltaAngle1 = 360/360.58242287*360/356.851325758*360/359.83265011*MathFunctions.keepAngleWithin180Degrees(bangle - banglePrev);
-            //double deltaAngle2 = 360/359.75*MathFunctions.keepAngleWithin180Degrees(dangle - danglePrev);
+            double dangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
+            double deltaAngle1 = 360/358.638192308*360/360.58242287*360/356.851325758*360/359.83265011*MathFunctions.keepAngleWithin180Degrees(bangle - banglePrev);
+            double deltaAngle2 = 360/360.4173125*360/358.811653846*360/359.75*MathFunctions.keepAngleWithin180Degrees(dangle - danglePrev);
             banglePrev = bangle;
-            //danglePrev = dangle;
-            angle = (deltaAngle1) + canglePrev;
+            danglePrev = dangle;
+            angle1+=deltaAngle1;
+            angle2+=deltaAngle2;
+            angle = (deltaAngle1+deltaAngle2)/2 + canglePrev;
             deltaAngle = angle-previousAngleReading;
             canglePrev = angle;
             ticker = 1;
@@ -220,9 +185,9 @@ public class Hardware {
             }
         }
 
-            int portReading=hub1Motors[0].getCurrentPosition();
-            int starboardReading=hub1Motors[3].getCurrentPosition();
-            int lateralReading=-hub1Motors[1].getCurrentPosition();
+            int portReading=-hub1Motors[3].getCurrentPosition();
+            int starboardReading=hub1Motors[1].getCurrentPosition();
+            int lateralReading=-hub1Motors[0].getCurrentPosition();
         if(firstLoop){
             startTime = time.milliseconds();
             prevTime = startTime;
@@ -233,24 +198,26 @@ public class Hardware {
             previousAngleOdoReading = angle;
             prevLocalY = 0;
             firstLoop = false;
+            T265.slamra.start();
         }
         double currentTime = time.milliseconds();
         deltaTime = currentTime-prevTime;
        int PortChange = portReading - previousPortReading;
             int StarboardChange = starboardReading - previousStarboardReading;
-        if(ticker%8!=0&&false) {
+        if(ticker%8!=0) {
             deltaAngleOdo  =  360/363.090869374*360/361.49102385*360/358.47252*360/361.801642105*360/358.753786593*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
             angle += deltaAngleOdo;
             deltaAngle = deltaAngleOdo;
             ticker++;
         }
-            double deltaAngleBodo  =  360/363.090869374*360/361.49102385*360/358.47252*360/361.801642105*360/358.753786593*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
+            double deltaAngleBodo  =  360/356.933974359*360/363.090869374*360/361.49102385*360/358.47252*360/361.801642105*360/358.753786593*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
             angleOdo +=deltaAngleBodo;
             double localXAlt = lateralReading - previousLateralReading;//-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
              localX =  lateralReading - previousLateralReading-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
 
         /*double localY = (PortChange + (deltaAngle * portOffset * (ticks_per_rotation/circumfrence)) + StarboardChange - (deltaAngle * starboardOffset * (ticks_per_rotation/circumfrence)))/2.0;
- */         double localYAlt = PortChange; //
+ */         double localYAlt = StarboardChange; //
+            double localYAlt2 = PortChange;
              localY = (PortChange+ (deltaAngle * portOffset * (ticks_per_rotation/circumfrence)) + StarboardChange - (deltaAngle * starboardOffset * (ticks_per_rotation/circumfrence)))/2;
             RobotLog.dd(TAG, "lateralReading: " + lateralReading);
             RobotLog.dd(TAG, "prevlateral: " + previousLateralReading);
@@ -266,9 +233,10 @@ public class Hardware {
                 xPosTicks += (localY) * Math.cos(previousAngleReading + deltaAngle * 0.5) + (localX) * Math.sin(previousAngleReading + deltaAngle * 0.5);//updates X position
                 yPosTicksAlt += (localYAlt) * Math.sin(previousAngleReading + deltaAngle * 0.5) - (localXAlt) * Math.cos(previousAngleReading + deltaAngle * 0.5);//updates Y position
                 xPosTicksAlt += (localYAlt) * Math.cos(previousAngleReading + deltaAngle * 0.5) + (localXAlt) * Math.sin(previousAngleReading + deltaAngle * 0.5);//updates X position
-                double[] AltAltNewPosition = MathFunctions.transposeCoordinate(xPosTicksAltAlt,yPosTicksAltAlt,localY,-localX,previousAngleReading+deltaAngle*0.5);
-                xPosTicksAltAlt = AltAltNewPosition[0];
-                yPosTicksAltAlt = AltAltNewPosition[1];
+                yPosTicksAlt2 += (localYAlt2) * Math.sin(previousAngleReading + deltaAngle * 0.5) - (localXAlt) * Math.cos(previousAngleReading + deltaAngle * 0.5);//updates Y position
+                xPosTicksAlt2 += (localYAlt2) * Math.cos(previousAngleReading + deltaAngle * 0.5) + (localXAlt) * Math.sin(previousAngleReading + deltaAngle * 0.5);//updates X position
+                yPosTicksAltAlt += (localY) * Math.sin(previousAngleOdoReading + deltaAngleOdo * 0.5) - (localX) * Math.cos(previousAngleOdoReading + deltaAngleOdo * 0.5);//updates Y position
+                xPosTicksAltAlt += (localY) * Math.cos(previousAngleOdoReading + deltaAngleOdo * 0.5) + (localX) * Math.sin(previousAngleOdoReading + deltaAngleOdo * 0.5);//updates X position
                 RobotLog.dd(TAG, "yPosTicks increment: " + ((localY) * Math.sin(previousAngleReading + deltaAngle * 0.5) - (localX) * Math.cos(previousAngleReading + deltaAngle * 0.5)));//updates Y position)
                 RobotLog.dd(TAG, "xPosTicks increment: " + ((localY) * Math.cos(previousAngleReading + deltaAngle * 0.5) + (localX) * Math.sin(previousAngleReading + deltaAngle * 0.5)));//updates X position))
                 RobotLog.dd(TAG, "xPosTicks: " + xPosTicks);
@@ -304,17 +272,9 @@ public class Hardware {
             previousAngleReading = angle;
 
              */
-            double w = deltaAngleBodo/((currentTime-prevTime)/1000);//inches
-        integratedAngularVeloTracker+=w*(currentTime-prevTime)/1000;
-        //double localYVelocity = (portVelo + (w*portOffset) + starboardVelo - (w * starboardOffset))/2.0;
-
-         localYVelocity = localY*circumfrence/ticks_per_rotation/((currentTime - prevTime)/1000);
-         if(sendT265OdoData){
-             sendT265Odometry(localY*circumfrence/ticks_per_rotation,-localX*circumfrence/ticks_per_rotation,deltaAngle,deltaTime/1000);
-         }
-        if(updatePID) {
-            sixWheelDrive.updatePID(localYVelocity - w * trackWidth / 2, localYVelocity + w * trackWidth / 2);
-        }
+        double localXCameraVelo = (-PortChange*circumfrence/ticks_per_rotation-8.5*deltaAngle - StarboardChange*circumfrence/ticks_per_rotation + 4.875*deltaAngle)/2/deltaTime *0.0254;
+        double localYCameraVelo = ((lateralReading-previousLateralReading)*circumfrence/ticks_per_rotation-1.75*deltaAngle)/deltaTime*0.0254;
+        //T265.slamra.sendOdometry(localXCameraVelo,localYCameraVelo);
         for(Motor motor: hub1Motors){
                 if(motor!=null&&motor.setTargetPosRequested){
                     motor.motor.setTargetPosition(motor.targetPosition);
@@ -354,7 +314,6 @@ public class Hardware {
                     servo.writeRequested = false;
                 }
             }
-        RobotLog.dd("MOTORDEBUG", "Left: "+sixWheelDrive.LF.power+ ", Right: "+sixWheelDrive.RF.power);
         previousLateralReading = lateralReading;
             previousAngleReading = angle;
             previousPortReading = portReading;
@@ -364,32 +323,12 @@ public class Hardware {
             previousAngleOdoReading = angleOdo;
     }
     public double getX(){
-        double xPosInches = (double)xPosTicks * circumfrence / ticks_per_rotation;
-        double yPosInches = (double)yPosTicks * circumfrence / ticks_per_rotation;
-        if(currentlyForwardDirection) {
-            this.xPosInches = MathFunctions.transposeCoordinate(xPosInches, yPosInches, centerWheelOffsetChange, angle)[0];
-        }
-        else{
-            this.xPosInches = MathFunctions.transposeCoordinate(xPosInches, yPosInches, -centerWheelOffsetChange, angle)[0];
-        }
-        return this.xPosInches;
+        xPosInches = (double)xPosTicks * circumfrence / ticks_per_rotation;
+        return xPosInches;
     }
     public double getY(){
-        double xPosInches = (double)xPosTicks * circumfrence / ticks_per_rotation;
-        double yPosInches = (double)yPosTicks * circumfrence / ticks_per_rotation;
-        if(currentlyForwardDirection) {
-            this.yPosInches = MathFunctions.transposeCoordinate(xPosInches, yPosInches, centerWheelOffsetChange, angle)[1];
-        }
-        else{
-            this.yPosInches = MathFunctions.transposeCoordinate(xPosInches, yPosInches, -centerWheelOffsetChange, angle)[1];
-        }
-        return this.yPosInches;
-    }
-    public double getXAbsoluteCenter(){
-        return (double)xPosTicks * circumfrence / ticks_per_rotation;
-    }
-    public double getYAbsoluteCenter(){
-        return (double)yPosTicks * circumfrence / ticks_per_rotation;
+        yPosInches = (double)yPosTicks * circumfrence / ticks_per_rotation;
+        return yPosInches;
     }
     public double getXMeters(){
         return getX() /39.3701;
@@ -397,7 +336,7 @@ public class Hardware {
     public double getYMeters(){
         return getY()/39.3701;
     }
-    public static Hardware getInstance(){
+    public static HardwareMecanum getInstance(){
         return hw;
     }
 }

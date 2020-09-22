@@ -1,16 +1,15 @@
 package org.firstinspires.ftc.teamcode.Ramsete;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
 
+import org.firstinspires.ftc.teamcode.MathFunctions;
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
+import org.firstinspires.ftc.teamcode.hardware.SixWheelDrive;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Array;
-import java.sql.Time;
 import java.util.ArrayList;
 
 
@@ -97,7 +96,16 @@ public class PathEngine{
 				double lineEndY = arc.arc.get(0).Y;
 				double lineLength = Math.hypot(lineEndX - prevIntercept[0],lineEndY-prevIntercept[1]);
 				double lineAccel = (Math.pow(pathToDraw.path.get(i+1).powerInitial,2) - Math.pow(pathToDraw.path.get(i).powerFinal,2))/(2*lineLength);
-				taskList.addTask(new Task(Math.abs(2*lineLength/(pathToDraw.path.get(i).powerFinal + pathToDraw.path.get(i+1).powerInitial)), pathToDraw.path.get(i).powerFinal,lineAccel,new Point(prevIntercept[0],prevIntercept[1]),angles[i]));
+				if(pathToDraw.path.get(i+1).powerInitial > pathToDraw.path.get(i).powerFinal) {
+					double timeExponentialGrowth = -SixWheelDrive.kA/SixWheelDrive.kV*Math.log((hardware.batteryVoltage-SixWheelDrive.kV*pathToDraw.path.get(i+1).powerInitial)/(hardware.batteryVoltage-SixWheelDrive.kV*pathToDraw.path.get(i).powerFinal));
+					double distanceExponentialGrowth = -SixWheelDrive.kA/SixWheelDrive.kV * pathToDraw.path.get(i).powerFinal * Math.pow(Math.E, -timeExponentialGrowth * SixWheelDrive.kV/SixWheelDrive.kA) + hardware.batteryVoltage/SixWheelDrive.kV*timeExponentialGrowth + hardware.batteryVoltage*SixWheelDrive.kA/Math.pow(SixWheelDrive.kV,2)*Math.pow(Math.E, -timeExponentialGrowth*SixWheelDrive.kV/ SixWheelDrive.kA) + SixWheelDrive.kA/SixWheelDrive.kV*pathToDraw.path.get(i).powerFinal - hardware.batteryVoltage*SixWheelDrive.kA/Math.pow(SixWheelDrive.kV, 2);
+					double lengthRemaining = lineLength-distanceExponentialGrowth;
+					taskList.addTask(new ExponentialVeloGrowthTask(timeExponentialGrowth,pathToDraw.path.get(i).powerFinal, 0, new Point(prevIntercept[0], prevIntercept[1]), angles[i]));
+					taskList.addTask(new Task(lengthRemaining/pathToDraw.path.get(i+1).powerInitial,pathToDraw.path.get(i+1).powerInitial,0, new Point(prevIntercept[0] + distanceExponentialGrowth * Math.cos(angles[i]), prevIntercept[1] + distanceExponentialGrowth * Math.sin(angles[i])), angles[i] ));
+				}
+				else {
+					taskList.addTask(new Task(Math.abs(2*lineLength/(pathToDraw.path.get(i).powerFinal + pathToDraw.path.get(i+1).powerInitial)), pathToDraw.path.get(i).powerFinal,lineAccel,new Point(prevIntercept[0],prevIntercept[1]),angles[i]));
+				}
 				double arcTime = arc.turnTime(arc.deltaHeading,arc.maxAngularAccel);
 				double arcAccel = (pathToDraw.path.get(i+1).powerFinal - pathToDraw.path.get(i+1).powerInitial)/(2*arcTime);
 				taskList.addTask(new ArcTask(arcTime, pathToDraw.path.get(i+1).powerInitial, arcAccel,arc.arcHalf1.get(0),  angles[i],0,arc.maxAngularAccel,arc.arcHalf1));
@@ -110,7 +118,16 @@ public class PathEngine{
 				double lineEndY = pathToDraw.path.get(i+1).Y;
 				double lineLength = Math.hypot(lineEndX - prevIntercept[0],lineEndY-prevIntercept[1]);
 				double lineAccel = (Math.pow(pathToDraw.path.get(i+1).powerInitial,2) - Math.pow(pathToDraw.path.get(i).powerFinal,2))/(2*lineLength);
-				taskList.addTask(new Task(Math.abs(2*lineLength/(pathToDraw.path.get(i).powerFinal + pathToDraw.path.get(i+1).powerInitial)), pathToDraw.path.get(i).powerFinal,lineAccel,new Point(prevIntercept[0],prevIntercept[1]),angles[i]));
+				if(pathToDraw.path.get(i+1).powerInitial > pathToDraw.path.get(i).powerFinal) {
+					double timeExponentialGrowth = -SixWheelDrive.kA/SixWheelDrive.kV*Math.log((hardware.batteryVoltage-SixWheelDrive.kV*pathToDraw.path.get(i+1).powerInitial)/(hardware.batteryVoltage-SixWheelDrive.kV*pathToDraw.path.get(i).powerFinal));
+					double distanceExponentialGrowth = -SixWheelDrive.kA/SixWheelDrive.kV * pathToDraw.path.get(i).powerFinal * Math.pow(Math.E, -timeExponentialGrowth * SixWheelDrive.kV/SixWheelDrive.kA) + hardware.batteryVoltage/SixWheelDrive.kV*timeExponentialGrowth + hardware.batteryVoltage*SixWheelDrive.kA/Math.pow(SixWheelDrive.kV,2)*Math.pow(Math.E, -timeExponentialGrowth*SixWheelDrive.kV/ SixWheelDrive.kA) + SixWheelDrive.kA/SixWheelDrive.kV*pathToDraw.path.get(i).powerFinal - hardware.batteryVoltage*SixWheelDrive.kA/Math.pow(SixWheelDrive.kV, 2);
+					double lengthRemaining = lineLength-distanceExponentialGrowth;
+					taskList.addTask(new ExponentialVeloGrowthTask(timeExponentialGrowth,pathToDraw.path.get(i).powerFinal, 0, new Point(prevIntercept[0], prevIntercept[1]), angles[i]));
+					taskList.addTask(new Task(lengthRemaining/pathToDraw.path.get(i+1).powerInitial,pathToDraw.path.get(i+1).powerInitial,0, new Point(prevIntercept[0] + distanceExponentialGrowth * Math.cos(angles[i]), prevIntercept[1] + distanceExponentialGrowth * Math.sin(angles[i])), angles[i] ));
+				}
+				else {
+					taskList.addTask(new Task(Math.abs(2*lineLength/(pathToDraw.path.get(i).powerFinal + pathToDraw.path.get(i+1).powerInitial)), pathToDraw.path.get(i).powerFinal,lineAccel,new Point(prevIntercept[0],prevIntercept[1]),angles[i]));
+				}
 				prevIntercept[0] = lineEndX;
 				prevIntercept[1] = lineEndY;
 				arcs.add(null);
@@ -176,7 +193,7 @@ public class PathEngine{
 			RobotLog.dd(TAG,"veloCommand: " + velocityCommand + ", velo: " +currentMotionData.desiredVelocity);
 			try {
 				writerDesiredKinematics.write("Time: "+currentTime+", Heading: " + currentMotionData.desiredHeading + ", ActualHeading: "+currentHeading + ", CurrentVelo: " + hardware.localYVelocity + ", VeloCommand: " + velocityCommand + ", DesiredVelo: "+currentMotionData.desiredVelocity*39.3701 + ", LateralVelo: " + hardware.localX/hardware.deltaTime+"\n");
-				writer.write("desired X: " + currentMotionData.desiredPosition.X * 39.3701 + ", desired Y: " + currentMotionData.desiredPosition.Y * 39.3701 + ", current X: " + hardware.xPosInches  + ", current Y: " + hardware.yPosInches +"\n");
+				writer.write("desired X: " + currentMotionData.desiredPosition.X * 39.3701 + ", desired Y: " + currentMotionData.desiredPosition.Y * 39.3701 + ", current X: " + hardware.getX()  + ", current Y: " + hardware.getY() +"\n");
 			}
 			catch(IOException e){
 				return;

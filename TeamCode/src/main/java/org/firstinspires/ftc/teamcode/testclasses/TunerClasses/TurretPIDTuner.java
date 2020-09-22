@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Turret;
 
 public class TurretPIDTuner extends LinearOpMode {
     public void runOpMode(){
-        Hardware hardware = new Hardware(hardwareMap);
+        Hardware hardware = new Hardware(hardwareMap,telemetry);
         Turret turret = new Turret(new CRServo[2], hardware.hub1Motors[3],hardware);//NEED TO REDO
         while(!isStopRequested()){
             if(gamepad1.left_bumper){

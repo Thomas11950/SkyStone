@@ -16,7 +16,7 @@ public class MaxSpeedTest extends LinearOpMode {
     Hardware hardware;
     String TAG = "feedfowardtuner";
     public void runOpMode(){
-        hardware = new Hardware(hardwareMap);
+        hardware = new Hardware(hardwareMap,telemetry);
         waitForStart();
         hardware.sixWheelDrive.goStraight(1);
         double prevPos = hardware.hub1Motors[0].motor.getCurrentPosition() * Hardware.circumfrence / Hardware.ticks_per_rotation;

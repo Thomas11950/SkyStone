@@ -20,7 +20,7 @@ public class MaxAngularAccel extends LinearOpMode {
     String TAG = "feedfowardtuner";
     public double accelTime = 500;
     public void runOpMode(){
-        hardware = new Hardware(hardwareMap);
+        hardware = new Hardware(hardwareMap,telemetry);
         waitForStart();
         double prevVelo = 0;
         double prevPos = Math.toRadians(hardware.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);

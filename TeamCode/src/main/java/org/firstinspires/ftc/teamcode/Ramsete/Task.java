@@ -28,7 +28,13 @@ public class Task {
 	public double getDesiredAngularVelocity(double timeStamp) {
 		return 0;
 	}
+	public double getAccel(double timeStamp){
+		return acceleration;
+	}
 	public boolean isArcTask(){
+		return false;
+	}
+	public boolean isExponentialGrowthTask(){
 		return false;
 	}
 }
