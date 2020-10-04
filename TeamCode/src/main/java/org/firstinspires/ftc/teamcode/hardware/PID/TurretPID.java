@@ -26,14 +26,22 @@ public class TurretPID extends GenericPID {
             }
             firstShouldIntegralBeZeroedLoop = false;
         }
-        if(Math.abs(disableIntegralThreshold) > Math.abs(error)){
-            return true;
+        boolean toReturn;
+        if(Math.abs(disableIntegralThreshold) < Math.abs(error)){
+            toReturn = true;
         }
         else if(((errorPositivePreviously && error < 0) || (!errorPositivePreviously && error > 0)) || error == 0){
-            return true;
+            toReturn = true;
         }
         else{
-            return false;
+            toReturn = false;
         }
+        if(error >=0){
+            errorPositivePreviously = true;
+        }
+        else{
+            errorPositivePreviously=false;
+        }
+        return toReturn;
     }
 }

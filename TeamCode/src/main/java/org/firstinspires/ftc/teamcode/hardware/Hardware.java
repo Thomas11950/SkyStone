@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.hardware;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -15,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.teamcode.MathFunctions;
+import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Shooter;
 import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPIDDrivetrain;
 import org.firstinspires.ftc.teamcode.vision.T265;
 
@@ -62,6 +64,7 @@ public class Hardware {
     public Motor[] hub1Motors;
     public Motor[] hub2Motors;
     public RegServo[] servos;
+    public ContRotServo[] CRservos;
     public MecanumDrive mecanumDrive;
     public SixWheelDrive sixWheelDrive;
     public ElapsedTime time;
@@ -83,6 +86,9 @@ public class Hardware {
     public double batteryVoltage;
     public static Telemetry telemetry;
     public boolean sendT265OdoData;
+    public double angle1 = 0;
+    public double angle2 = 0;
+    public Shooter shooter;
     public Hardware(HardwareMap hardwareMap, Telemetry telemetry){
         this.hardwareMap = hardwareMap;
         hw = this;
@@ -99,8 +105,8 @@ public class Hardware {
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
-        //imu2 = hardwareMap.get(BNO055IMU.class,"imu2");
-        //imu2.initialize(parameters);
+        imu2 = hardwareMap.get(BNO055IMU.class,"imu2");
+        imu2.initialize(parameters);
         angle = Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
         previousAngleReading = angle;
         allHubs = this.hardwareMap.getAll(LynxModule.class);
@@ -124,7 +130,9 @@ public class Hardware {
         sixWheelDrive = new SixWheelDrive(hub1Motors[0],hub1Motors[1],hub1Motors[2],hub1Motors[3],time);
         hub2Motors = new Motor[4];//initialize here
         servos = new RegServo[12];//initialize here
+
         setForward();
+        shooter = new Shooter(hub2Motors[0],hub2Motors[1],servos[0],this);
     }
     /*public Hardware(HardwareMap hardwareMap){
         this.hardwareMap = hardwareMap;
@@ -172,21 +180,24 @@ public class Hardware {
         double[] T265VeloData = MathFunctions.transposeCoordinate(localX,localY,-T265.localXOffsetCameraToCenter,-T265.localYOffsetCameraToCenter,deltaHeading);
         T265VeloData[0] = (T265VeloData[0] + T265.localXOffsetCameraToCenter)*0.0254/deltaTime;
         T265VeloData[1] = (T265VeloData[1] + T265.localYOffsetCameraToCenter)*0.0254/deltaTime;
-        T265.slamra.sendOdometry(T265VeloData[0],T265VeloData[1]);
+        telemetry.addData("sentXVelo",-localX*0.0254/deltaTime);
+        T265.slamra.sendOdometry(-T265VeloData[0]*0.0254/deltaTime,-T265VeloData[1]*0.0254/deltaTime);
     }
     public void loop(){
 
         loops++;
         double deltaAngle=0;
         double deltaAngleOdo=0;
-        if(ticker % 8 == 0||true) {
+        if(ticker % 8 == 0) {
             double bangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
-            //double dangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
-            double deltaAngle1 = 360/360.58242287*360/356.851325758*360/359.83265011*MathFunctions.keepAngleWithin180Degrees(bangle - banglePrev);
-            //double deltaAngle2 = 360/359.75*MathFunctions.keepAngleWithin180Degrees(dangle - danglePrev);
+            double dangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
+            double deltaAngle1 = (360/357.0446428571429)*MathFunctions.keepAngleWithin180Degrees(bangle - banglePrev);
+            double deltaAngle2 = (360/359.7276785714286)*MathFunctions.keepAngleWithin180Degrees(dangle - danglePrev);
+            angle1 += deltaAngle1;
+            angle2 += deltaAngle2;
             banglePrev = bangle;
-            //danglePrev = dangle;
-            angle = (deltaAngle1) + canglePrev;
+            danglePrev = dangle;
+            angle = (deltaAngle1+deltaAngle2)/2 + canglePrev;
             deltaAngle = angle-previousAngleReading;
             canglePrev = angle;
             ticker = 1;
@@ -238,13 +249,13 @@ public class Hardware {
         deltaTime = currentTime-prevTime;
        int PortChange = portReading - previousPortReading;
             int StarboardChange = starboardReading - previousStarboardReading;
-        if(ticker%8!=0&&false) {
-            deltaAngleOdo  =  360/363.090869374*360/361.49102385*360/358.47252*360/361.801642105*360/358.753786593*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
+        if(ticker%8!=0) {
+            deltaAngleOdo  =  360/362.5*360/360.74258*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
             angle += deltaAngleOdo;
             deltaAngle = deltaAngleOdo;
             ticker++;
         }
-            double deltaAngleBodo  =  360/363.090869374*360/361.49102385*360/358.47252*360/361.801642105*360/358.753786593*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
+            double deltaAngleBodo  =  360/362.5*360/360.74258*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
             angleOdo +=deltaAngleBodo;
             double localXAlt = lateralReading - previousLateralReading;//-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
              localX =  lateralReading - previousLateralReading-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
@@ -315,6 +326,7 @@ public class Hardware {
         if(updatePID) {
             sixWheelDrive.updatePID(localYVelocity - w * trackWidth / 2, localYVelocity + w * trackWidth / 2);
         }
+        shooter.updateShooterPIDF(deltaTime/1000);
         for(Motor motor: hub1Motors){
                 if(motor!=null&&motor.setTargetPosRequested){
                     motor.motor.setTargetPosition(motor.targetPosition);
@@ -352,6 +364,12 @@ public class Hardware {
                 if(servo!=null&&servo.writeRequested){
                     servo.servo.setPosition(servo.position);
                     servo.writeRequested = false;
+                }
+            }
+            for(ContRotServo CRservo: CRservos){
+                if(CRservo!=null&&CRservo.writeRequested){
+                    CRservo.servo.setPower(CRservo.power);
+                    CRservo.writeRequested = false;
                 }
             }
         RobotLog.dd("MOTORDEBUG", "Left: "+sixWheelDrive.LF.power+ ", Right: "+sixWheelDrive.RF.power);

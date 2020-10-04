@@ -10,8 +10,8 @@ import java.util.ArrayList;
 
 public class BlobDetectorPipeline extends OpenCvPipeline {
 
-    public int YThreshold; //Higher than threshold = is full yellow rect
-    public int CbThreshold; //Lower than threshold = is full yellow rect
+    public int CbThresholdHigh=150; //Lower than threshold = is full yellow rect
+    public int CbThresholdLow=135;
     public int distanceThreshold;
     public int percentFillThreshold;
     @Override
@@ -48,6 +48,6 @@ public class BlobDetectorPipeline extends OpenCvPipeline {
     }
 
     public boolean passesThreshold(double Y, double Cr, double Cb){
-        return Y > YThreshold && Cb < CbThreshold;
+        return Cb > CbThresholdLow && Cb < CbThresholdHigh;
     }
 }

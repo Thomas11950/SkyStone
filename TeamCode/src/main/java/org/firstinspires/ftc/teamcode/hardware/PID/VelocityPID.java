@@ -10,7 +10,7 @@ public class VelocityPID extends GenericPID {
     public double kV;
     double kStatic;
     double kA;
-    Writer writer;
+    public Writer writer;
     public VelocityPID(double kP, double kI, double kD, double kV, double kStatic, double kA, ElapsedTime time, String outputFileName) {
         super(kP, kI, kD, time);
         try {

@@ -1,0 +1,44 @@
+package org.firstinspires.ftc.teamcode.testclasses.TunerClasses;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.RobotLog;
+
+import org.firstinspires.ftc.teamcode.hardware.Hardware;
+import org.firstinspires.ftc.teamcode.hardware.SixWheelDrive;
+
+import java.io.FileWriter;
+import java.io.IOException;
+
+@TeleOp(name="ShooterFFTest", group="TeleOp")
+public class ShooterFFTest extends LinearOpMode {
+    public void runOpMode(){
+        final double TIMETOREACHMAX = 10000;//milliseconds
+        double  MAX_TICKS_PER_SEC =1432;//max ticks-per-sec
+        Hardware hardware = new Hardware(hardwareMap,telemetry);
+        waitForStart();
+        hardware.shooter.shooterMotor1.readRequested = true;
+        hardware.shooter.shooterMotor2.readRequested = true;
+        double startTime = hardware.time.milliseconds();
+        while(!isStopRequested()){
+            double currentTime = hardware.time.milliseconds();
+
+            if(currentTime - startTime < TIMETOREACHMAX){
+                hardware.shooter.shooterVeloPID.setState(1/TIMETOREACHMAX*(currentTime-startTime) * MAX_TICKS_PER_SEC);
+            }
+            else{
+                MAX_TICKS_PER_SEC -= gamepad1.left_stick_y;
+                telemetry.addData("speed (Ticks/sec)", MAX_TICKS_PER_SEC);
+                telemetry.update();
+                hardware.shooter.shooterVeloPID.setState(MAX_TICKS_PER_SEC);
+            }
+            hardware.loop();
+        }
+        try {
+            hardware.shooter.shooterVeloPID.writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}

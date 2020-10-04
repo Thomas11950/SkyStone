@@ -55,7 +55,7 @@ public class GenericPID {
             derivative = deltaError / deltaTime;
         }
         this.currentState = currentState;
-        return kP * deltaError + kI * integral + kD * derivative;
+        return kP * error + kI * integral + kD * derivative;
     }
 
     public boolean shouldIntegralBeZeroed(double error){

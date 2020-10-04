@@ -8,21 +8,23 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.easyopencv.OpenCvCamera;
 import org.firstinspires.ftc.teamcode.easyopencv.OpenCvCameraFactory;
 import org.firstinspires.ftc.teamcode.easyopencv.OpenCvCameraRotation;
-@TeleOp(name="YCrCbValueGetter", group="TeleOp")
-public class YCrCbValueGetter extends LinearOpMode {
+import org.firstinspires.ftc.teamcode.vision.BlobDetection.Blob;
+import org.firstinspires.ftc.teamcode.vision.BlobDetection.BlobDetectorPipeline;
+
+@TeleOp(name="BlobDetector", group="TeleOp")
+public class BlobDetectionOpMode extends LinearOpMode {
     OpenCvCamera webcam;
     public void runOpMode() {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         webcam.openCameraDevice();
         waitForStart();
-        YCrCbValueGetterPipeline pipeline = new YCrCbValueGetterPipeline(300,220,340,260);
+        BlobDetectorPipeline pipeline = new BlobDetectorPipeline();
         webcam.setPipeline(pipeline);
         webcam.startStreaming(640,480, OpenCvCameraRotation.UPRIGHT);
         webcam.resumeViewport();
         while(!isStopRequested()){
-            telemetry.addLine("Y: "+ pipeline.yCrCbHighlightedBox[0] + ", Cr: "+pipeline.yCrCbHighlightedBox[1] + ", Cb: "+pipeline.yCrCbHighlightedBox[2]);
-            telemetry.update();
+
         }
     }
 }

@@ -3,7 +3,9 @@ package org.firstinspires.ftc.teamcode.Teleop;
 import android.os.Environment;
 import android.view.Gravity;
 
+import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.geometry.Transform2d;
+import com.arcrobotics.ftclib.geometry.Translation2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.spartronics4915.lib.T265Camera;
@@ -24,7 +26,7 @@ public class SixWheelDriveTeleop extends OpMode {
     FileWriter writer;
     public void init(){
         if (T265.slamra == null) {
-            T265.slamra = new T265Camera(new Transform2d(),1, hardwareMap.appContext);
+            T265.slamra = new T265Camera(new Transform2d(),T265.ODOMETRY_COVARIANCE, hardwareMap.appContext);
         }
         hardware = new Hardware(hardwareMap,telemetry);
         slowMode = false;
@@ -67,7 +69,7 @@ public class SixWheelDriveTeleop extends OpMode {
         hardware.sixWheelDrive.LB.setPower(leftPower);
         hardware.sixWheelDrive.RF.setPower(rightPower);
         hardware.sixWheelDrive.RB.setPower(rightPower);
-        hardware.sendT265OdoData= true;
+        hardware.sendT265OdoData= false;
         hardware.loop();
         T265Camera.CameraUpdate up = T265.slamra.getLastReceivedCameraUpdate();
         double[] t265position = T265.getCameraPosition(up);
@@ -77,8 +79,6 @@ public class SixWheelDriveTeleop extends OpMode {
         catch(IOException e){
             return;
         }
-        Acceleration gravity = hardware.imu.getGravity();
-        telemetry.addLine("IMU accel Z: "+gravity.zAccel + ", IMU accel X: "+gravity.xAccel + ", IMU accel Y: "+gravity.yAccel+", total Accel: "+Math.sqrt(Math.pow(gravity.xAccel,2) +Math.pow(gravity.yAccel,2)+ Math.pow(gravity.zAccel,2)) );
         if(up.confidence == null){
             telemetry.addLine("no confidence level yet");
         }
@@ -98,7 +98,7 @@ public class SixWheelDriveTeleop extends OpMode {
         telemetry.addLine("left Power: " + leftPower + ", right Power: "+rightPower);
         telemetry.addLine("left position: " + hardware.hub1Motors[0].getCurrentPosition() + ", right position: " + hardware.hub1Motors[3].motor.getCurrentPosition() + ", lateral position: " + -hardware.hub1Motors[1].getCurrentPosition());
         telemetry.addLine("angle: "+hardware.angle + ", in degrees: "+Math.toDegrees(hardware.angle) + ", from odo: "+ Math.toDegrees(hardware.angleOdo));
-        telemetry.addLine("angle 1: "+hardware.banglePrev + ", angle 2: "+hardware.danglePrev);
+        telemetry.addLine("angle 1: "+Math.toDegrees(hardware.angle1) + ", angle 2: "+Math.toDegrees(hardware.angle2));
         telemetry.addLine("X: " + hardware.getX()+ ", Y: "+ hardware.getY() + ", angle: " + hardware.angle);
         telemetry.addLine("XCenter: " + hardware.getXAbsoluteCenter()  + ", YCenter: "+hardware.getYAbsoluteCenter());
         telemetry.addLine("XAltAlt: "+ hardware.xPosTicksAltAlt * Hardware.circumfrence / Hardware.ticks_per_rotation + ", YAltAlt: " + hardware.yPosTicksAltAlt * Hardware.circumfrence/Hardware.ticks_per_rotation);
