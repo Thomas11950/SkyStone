@@ -17,6 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.teamcode.MathFunctions;
 import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Shooter;
+import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Turret;
 import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPIDDrivetrain;
 import org.firstinspires.ftc.teamcode.vision.T265;
 
@@ -89,6 +90,7 @@ public class Hardware {
     public double angle1 = 0;
     public double angle2 = 0;
     public Shooter shooter;
+    public Turret turret;
     public Hardware(HardwareMap hardwareMap, Telemetry telemetry){
         this.hardwareMap = hardwareMap;
         hw = this;
@@ -133,6 +135,7 @@ public class Hardware {
 
         setForward();
         shooter = new Shooter(hub2Motors[0],hub2Motors[1],servos[0],this);
+        turret = new Turret(new ContRotServo[]{CRservos[0],CRservos[1]}, hub2Motors[1], this);
     }
     /*public Hardware(HardwareMap hardwareMap){
         this.hardwareMap = hardwareMap;
@@ -326,7 +329,12 @@ public class Hardware {
         if(updatePID) {
             sixWheelDrive.updatePID(localYVelocity - w * trackWidth / 2, localYVelocity + w * trackWidth / 2);
         }
-        shooter.updateShooterPIDF(deltaTime/1000);
+        if(shooter.updatePID) {
+            shooter.updateShooterPIDF(deltaTime / 1000);
+        }
+        if(turret.updatePID){
+            turret.updateTurretPID();
+        }
         for(Motor motor: hub1Motors){
                 if(motor!=null&&motor.setTargetPosRequested){
                     motor.motor.setTargetPosition(motor.targetPosition);
