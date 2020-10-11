@@ -21,7 +21,7 @@ public class ServoTuner extends LinearOpMode {
         Servo tuned = hardwareMap.get(Servo.class,"tuned");
         waitForStart();
 
-        double position = 0;
+        double position = 0.5;
         double prevTime = time.milliseconds();
         while(!isStopRequested()) {
             double currentTime = time.milliseconds();

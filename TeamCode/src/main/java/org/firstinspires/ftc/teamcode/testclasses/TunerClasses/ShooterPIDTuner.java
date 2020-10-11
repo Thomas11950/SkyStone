@@ -11,8 +11,8 @@ import org.firstinspires.ftc.teamcode.hardware.SixWheelDrive;
 import java.io.FileWriter;
 import java.io.IOException;
 
-@TeleOp(name="ShooterFFTest", group="TeleOp")
-public class ShooterFFTest extends LinearOpMode {
+@TeleOp(name="ShooterPIDTuner", group="TeleOp")
+public class ShooterPIDTuner extends LinearOpMode {
     public void runOpMode(){
         final double TIMETOREACHMAX = 10000;//milliseconds
         double  MAX_TICKS_PER_SEC =1432;//max ticks-per-sec
@@ -23,7 +23,7 @@ public class ShooterFFTest extends LinearOpMode {
         double startTime = hardware.time.milliseconds();
         while(!isStopRequested()){
             double currentTime = hardware.time.milliseconds();
-
+            hardware.shooter.updatePID = true;
             if(currentTime - startTime < TIMETOREACHMAX){
                 hardware.shooter.shooterVeloPID.setState(1/TIMETOREACHMAX*(currentTime-startTime) * MAX_TICKS_PER_SEC);
             }

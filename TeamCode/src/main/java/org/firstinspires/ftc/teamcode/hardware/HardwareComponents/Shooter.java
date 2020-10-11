@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
 import org.firstinspires.ftc.teamcode.hardware.Motor;
+import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPIDDrivetrain;
 import org.firstinspires.ftc.teamcode.hardware.RegServo;
 import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPID;
 
@@ -20,31 +21,38 @@ public class Shooter {
     private boolean firstUpdateShooterPIDFLoop = true;
     private double prevShooterPos;
     public boolean updatePID;
+    public double rampPostion = ZERO_DEGREES_TICKS;
     public Shooter(Motor shooterMotor1, Motor shooterMotor2, RegServo shootAngleController, Hardware hardware){
         this.shootAngleController = shootAngleController;
         this.shooterMotor1 = shooterMotor1;
         this.shooterMotor2 = shooterMotor2;
-        this.shooterMotor1 = new Motor(hardware.hardwareMap.get(DcMotorEx.class,"shooterMotor1"));
-        this.shooterMotor2 = new Motor(hardware.hardwareMap.get(DcMotorEx.class,"shooterMotor2"));
+        shooterMotor1.readRequested = true;
         this.shootAngleController = new RegServo(hardware.hardwareMap.get(Servo.class,"shootAngleController"));
         this.shooterMotor1.motor.setDirection(DcMotorEx.Direction.FORWARD);
-        this.shooterMotor2.motor.setDirection(DcMotorEx.Direction.REVERSE);
+        this.shooterMotor2.motor.setDirection(DcMotorEx.Direction.FORWARD);
         this.hardware = hardware;
-        shooterVeloPID = new VelocityPID(0.01,0.01,0.5,0.0059,3.12,0,hardware.time,"/sdcard/FIRST/shooterFFdata.txt");
+        shooterVeloPID = new VelocityPID(0.0025,0.001,0,0.005,2.84,0,hardware.time,"/sdcard/FIRST/shooterFFdata.txt");
+        shooterVeloPID.integralAntiWindupActive = false;
         updatePID = false;
     }
     public void updateShooterPIDF(double deltaTime){
         if(firstUpdateShooterPIDFLoop){
             prevShooterPos = shooterMotor1.getCurrentPosition();
+            firstUpdateShooterPIDFLoop = false;
         }
         double shooterPos = shooterMotor1.getCurrentPosition();
         double currentVelo = (shooterPos - prevShooterPos)/deltaTime;
         prevShooterPos = shooterPos;
         double outputPower = shooterVeloPID.updateCurrentStateAndGetOutput(currentVelo);
-        shooterMotor1.setPower(outputPower);
-        shooterMotor2.setPower(outputPower);
+        double voltage = VelocityPIDDrivetrain.getBatteryVoltage();
+        shooterMotor1.setPower(outputPower/voltage);
+        shooterMotor2.setPower(outputPower/voltage);
     }
     public void setRampDegrees(double degrees){
+        rampPostion = degrees;
         shootAngleController.setPosition(degrees/270+ZERO_DEGREES_TICKS);
+    }
+    public void autoRampPositionForHighGoal(double distanceToGoal){
+
     }
 }

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.hardware.HardwareComponents;
 
 import com.qualcomm.robotcore.hardware.CRServo;
 
+import org.firstinspires.ftc.teamcode.FieldConstants;
 import org.firstinspires.ftc.teamcode.MathFunctions;
 import org.firstinspires.ftc.teamcode.hardware.ContRotServo;
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
@@ -20,8 +21,6 @@ public class Turret {
     public boolean updatePID;
     public Turret(ContRotServo[] turretServos, Motor encoder, Hardware hardware){
         this.turretServos = turretServos;
-        turretServos[0] = new ContRotServo(hardware.hardwareMap.get(CRServo.class,"turretServo1"));
-        turretServos[1] = new ContRotServo(hardware.hardwareMap.get(CRServo.class,"turretServo2"));
         this.hardware = hardware;
         this.encoder = encoder;
         startTurretPosition = encoder.getCurrentPosition();
@@ -43,5 +42,9 @@ public class Turret {
         for(ContRotServo crservo: turretServos){
             crservo.setPower(power);
         }
+    }
+    public void pointTowardsHighGoal(double[] currentPoint){
+        double angleToPointTo = Math.atan2((currentPoint[1]- FieldConstants.highGoalPosition[1]),(currentPoint[0]-FieldConstants.highGoalPosition[0]));
+        setTurretAngle(angleToPointTo);
     }
 }

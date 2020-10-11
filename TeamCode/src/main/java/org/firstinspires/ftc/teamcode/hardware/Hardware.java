@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
 
@@ -16,6 +17,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.teamcode.MathFunctions;
+import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Intake;
+import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Mag;
 import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Shooter;
 import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Turret;
 import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPIDDrivetrain;
@@ -91,6 +94,8 @@ public class Hardware {
     public double angle2 = 0;
     public Shooter shooter;
     public Turret turret;
+    public Intake intake;
+    public Mag mag;
     public Hardware(HardwareMap hardwareMap, Telemetry telemetry){
         this.hardwareMap = hardwareMap;
         hw = this;
@@ -132,10 +137,20 @@ public class Hardware {
         sixWheelDrive = new SixWheelDrive(hub1Motors[0],hub1Motors[1],hub1Motors[2],hub1Motors[3],time);
         hub2Motors = new Motor[4];//initialize here
         servos = new RegServo[12];//initialize here
+        CRservos = new ContRotServo[12];
 
         setForward();
+        CRservos[0] = new ContRotServo(hardwareMap.get(CRServo.class,"turretServo1"));
+        CRservos[1] = new ContRotServo(hardwareMap.get(CRServo.class,"turretServo2"));
+        hub2Motors[0] = new Motor(hardwareMap.get(DcMotorEx.class,"shooterMotor1"));
+        hub2Motors[1] = new Motor(hardwareMap.get(DcMotorEx.class,"shooterMotor2"));
+        hub2Motors[2] = new Motor(hardwareMap.get(DcMotorEx.class,"intakeMotor1"));
+        hub2Motors[3] = new Motor(hardwareMap.get(DcMotorEx.class,"intakeMotor2"));
+        servos[1] = new RegServo(hardwareMap.get(Servo.class,"intakeDropperGuard"));
         shooter = new Shooter(hub2Motors[0],hub2Motors[1],servos[0],this);
         turret = new Turret(new ContRotServo[]{CRservos[0],CRservos[1]}, hub2Motors[1], this);
+        intake = new Intake(hub2Motors[2],hub2Motors[3],servos[1]);
+        mag = new Mag(servos[2]);
     }
     /*public Hardware(HardwareMap hardwareMap){
         this.hardwareMap = hardwareMap;
@@ -230,6 +245,7 @@ public class Hardware {
         for(Motor motor: hub2Motors){
             if(motor != null && motor.readRequested){
                 motor.currentPosition = motor.motor.getCurrentPosition();
+                Hardware.telemetry.addData("motor raw pos", motor.currentPosition);
                 motor.currentVelocity = motor.motor.getVelocity(AngleUnit.RADIANS);
             }
         }
@@ -376,6 +392,7 @@ public class Hardware {
             }
             for(ContRotServo CRservo: CRservos){
                 if(CRservo!=null&&CRservo.writeRequested){
+                    telemetry.addLine("CRServoPowerSet");
                     CRservo.servo.setPower(CRservo.power);
                     CRservo.writeRequested = false;
                 }

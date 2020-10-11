@@ -17,14 +17,14 @@ public class ShooterTester extends LinearOpMode {
         toTest.setDirection(DcMotor.Direction.FORWARD);
         toTest2.setDirection(DcMotor.Direction.FORWARD);
         waitForStart();
-        double powerToSet = 1;
+        double powerToSet = 0;
         double servodegrees = 0;
         while(!isStopRequested()){
             toTest.setPower(powerToSet);
             toTest2.setPower(powerToSet);
             toTestServo.setPosition(servodegrees/270+ Shooter.ZERO_DEGREES_TICKS);
-            powerToSet -= gamepad1.left_stick_y*0.01;
-            servodegrees -= gamepad1.right_stick_y*0.01;
+            powerToSet -= gamepad1.left_stick_y*0.025;
+            servodegrees -= gamepad1.right_stick_y*0.5;
             telemetry.addData("servo position",servodegrees);
             telemetry.addData("power",powerToSet* getBatteryVoltage());
             telemetry.update();
