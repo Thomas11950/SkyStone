@@ -21,6 +21,7 @@ import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Intake;
 import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Mag;
 import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Shooter;
 import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Turret;
+import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.WobblerArm;
 import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPIDDrivetrain;
 import org.firstinspires.ftc.teamcode.vision.T265;
 
@@ -96,6 +97,7 @@ public class Hardware {
     public Turret turret;
     public Intake intake;
     public Mag mag;
+    public WobblerArm wobbler;
     public Hardware(HardwareMap hardwareMap, Telemetry telemetry){
         this.hardwareMap = hardwareMap;
         hw = this;
@@ -146,11 +148,17 @@ public class Hardware {
         hub2Motors[1] = new Motor(hardwareMap.get(DcMotorEx.class,"shooterMotor2"));
         hub2Motors[2] = new Motor(hardwareMap.get(DcMotorEx.class,"intakeMotor1"));
         hub2Motors[3] = new Motor(hardwareMap.get(DcMotorEx.class,"intakeMotor2"));
+        servos[0] = new RegServo(hardwareMap.get(Servo.class,"shootAngleController"));
         servos[1] = new RegServo(hardwareMap.get(Servo.class,"intakeDropperGuard"));
+        servos[2] = new RegServo(hardwareMap.get(Servo.class,"magServo"));
+        servos[4] = new RegServo(hardwareMap.get(Servo.class,"wobblerClaw"));
+        servos[5] = new RegServo(hardwareMap.get(Servo.class,"wobblerArm"));
+        servos[6] = new RegServo(hardwareMap.get(Servo.class,"ringPusher"));
         shooter = new Shooter(hub2Motors[0],hub2Motors[1],servos[0],this);
-        turret = new Turret(new ContRotServo[]{CRservos[0],CRservos[1]}, hub2Motors[1], this);
+        turret = new Turret(new ContRotServo[]{CRservos[0],CRservos[1]}, hub2Motors[0], this);
         intake = new Intake(hub2Motors[2],hub2Motors[3],servos[1]);
-        mag = new Mag(servos[2]);
+        mag = new Mag(servos[2],servos[6]);
+        wobbler = new WobblerArm(servos[5],servos[4]);
     }
     /*public Hardware(HardwareMap hardwareMap){
         this.hardwareMap = hardwareMap;
@@ -242,10 +250,10 @@ public class Hardware {
                 hub2ReadNeeded = true;
         }
         allHubs.get(1).clearBulkCache(); // depends on which one is not the odo hub
-        for(Motor motor: hub2Motors){
+        for(int i = 0; i <hub2Motors.length;i++){
+            Motor motor = hub2Motors[i];
             if(motor != null && motor.readRequested){
                 motor.currentPosition = motor.motor.getCurrentPosition();
-                Hardware.telemetry.addData("motor raw pos", motor.currentPosition);
                 motor.currentVelocity = motor.motor.getVelocity(AngleUnit.RADIANS);
             }
         }
@@ -392,7 +400,6 @@ public class Hardware {
             }
             for(ContRotServo CRservo: CRservos){
                 if(CRservo!=null&&CRservo.writeRequested){
-                    telemetry.addLine("CRServoPowerSet");
                     CRservo.servo.setPower(CRservo.power);
                     CRservo.writeRequested = false;
                 }

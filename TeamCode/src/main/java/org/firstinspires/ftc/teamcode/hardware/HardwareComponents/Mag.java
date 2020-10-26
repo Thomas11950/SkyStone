@@ -1,16 +1,23 @@
 package org.firstinspires.ftc.teamcode.hardware.HardwareComponents;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
 import org.firstinspires.ftc.teamcode.hardware.RegServo;
 
 public class Mag {
     RegServo magServo;
-    double takeRingsPosition=0.47444;
-    double feedTopRingPosition=0.29989;
-    double feedMiddleRingPosition=0.26624;
-    double feedBottomRingPosition=0.2317;
+    RegServo ringPusher;
+    double ringPusherResting = 0.54905;
+    double ringPusherPushedIn = 0.424;
+    double takeRingsPosition=0.4814;
+    double feedTopRingPosition=0.3166;
+    double feedMiddleRingPosition=0.26788;
+    double feedBottomRingPosition=0.23722;
     public State currentState;
-    public Mag(RegServo magServo){
+    public Mag(RegServo magServo, RegServo ringPusher){
         this.magServo = magServo;
+        this.ringPusher = ringPusher;
         collectRings();
         currentState = State.COLLECT;
     }
@@ -28,13 +35,13 @@ public class Mag {
     }
     public void updateStateAndSetPosition(){
         if(currentState == State.COLLECT){
-            currentState = State.BOTTOM;
+            currentState = State.TOP;
         }
-        else if(currentState == State.BOTTOM){
+        else if(currentState == State.TOP){
             currentState = State.MID;
         }
         else if(currentState == State.MID){
-            currentState = State.TOP;
+            currentState = State.BOTTOM;
         }
         else{
             currentState = State.COLLECT;
@@ -43,7 +50,7 @@ public class Mag {
             collectRings();
         }
         else if(currentState == State.BOTTOM){
-            feedMidRing();
+            feedBottomRing();
         }
         else if(currentState == State.MID){
             feedMidRing();
@@ -51,11 +58,18 @@ public class Mag {
         else{
             feedTopRing();
         }
+
     }
     public enum State{
         TOP,
         MID,
         BOTTOM,
         COLLECT
+    }
+    public void pushInRings(){
+        ringPusher.setPosition(ringPusherPushedIn);
+    }
+    public void setRingPusherResting(){
+        ringPusher.setPosition(ringPusherResting);
     }
 }

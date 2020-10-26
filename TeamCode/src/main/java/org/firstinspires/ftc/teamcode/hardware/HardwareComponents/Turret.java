@@ -8,6 +8,7 @@ import org.firstinspires.ftc.teamcode.MathFunctions;
 import org.firstinspires.ftc.teamcode.hardware.ContRotServo;
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
 import org.firstinspires.ftc.teamcode.hardware.Motor;
+import org.firstinspires.ftc.teamcode.hardware.PID.FakePID;
 import org.firstinspires.ftc.teamcode.hardware.PID.TurretPID;
 
 public class Turret {
@@ -15,24 +16,28 @@ public class Turret {
     Hardware hardware;
     ContRotServo[] turretServos;
     private double startTurretPosition;
-    public TurretPID turretPID;
+    public FakePID turretPID;
     public Motor encoder;
     public double CENTER_TO_TURRET_INCHES;
     public boolean updatePID;
+    public double maxCounterClockwise;
+    public double maxClockwise;
     public Turret(ContRotServo[] turretServos, Motor encoder, Hardware hardware){
         this.turretServos = turretServos;
         this.hardware = hardware;
         this.encoder = encoder;
-        startTurretPosition = encoder.getCurrentPosition();
-        turretPID = new TurretPID(1,1,1,Math.toRadians(20),hardware.time);
+        encoder.readRequested = true;
+        startTurretPosition = -encoder.getCurrentPosition();
+        //turretPID = new TurretPID(1,1,1,Math.toRadians(20),hardware.time);
+        turretPID = new FakePID(1,0.0349066,hardware.time);
         updatePID = false;
     }
     public void setTurretAngle(double globalTurretAngle){//global turret angle is the angle with respect to the field, local is the angle with respect to the robot
-        double desiredLocalTurretAngle = MathFunctions.keepAngleWithin180Degrees(globalTurretAngle - hardware.angle);
+        double desiredLocalTurretAngle = MathFunctions.keepAngleWithinSetRange(-maxClockwise,maxCounterClockwise,globalTurretAngle - hardware.angle);
         turretPID.setState(desiredLocalTurretAngle);
     }
     public void updateTurretPID(){
-        double output = turretPID.updateCurrentStateAndGetOutput(encoder.getCurrentPosition()/ticks_per_radian - startTurretPosition);
+        double output = turretPID.updateCurrentStateAndGetOutput(-encoder.getCurrentPosition()/ticks_per_radian - startTurretPosition);
         setAllTurretServoPowers(output);
     }
     public double[] getTurretPosition(){
@@ -43,7 +48,8 @@ public class Turret {
             crservo.setPower(power);
         }
     }
-    public void pointTowardsHighGoal(double[] currentPoint){
+    public void pointTowardsHighGoal(){
+        double[] currentPoint = getTurretPosition();
         double angleToPointTo = Math.atan2((currentPoint[1]- FieldConstants.highGoalPosition[1]),(currentPoint[0]-FieldConstants.highGoalPosition[0]));
         setTurretAngle(angleToPointTo);
     }

@@ -1,10 +1,10 @@
 package org.firstinspires.ftc.teamcode.hardware;
 
 public class MecanumDrive {
-    Motor LF;
-    Motor LB;
-    Motor RF;
-    Motor RB;
+    public Motor LF;
+    public Motor LB;
+    public Motor RF;
+    public Motor RB;
     public MecanumDrive (Motor LF, Motor LB, Motor RF, Motor RB){
         this.LF = LF;
         this.LB = LB;

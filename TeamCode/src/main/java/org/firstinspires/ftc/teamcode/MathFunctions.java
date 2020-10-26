@@ -12,6 +12,15 @@ public class MathFunctions {
         }
         return angle;
     }
+    public static double keepAngleWithinSetRange(double rangeBottom, double rangeTop, double angle){
+        while(angle > rangeTop){
+            angle -= Math.toRadians(360);
+        }
+        while(angle < rangeBottom){
+            angle += Math.toRadians(360);
+        }
+        return angle;
+    }
     public static double[] findIntercept(double equation1Slope, double equation1YIntercept, double equation2Slope, double equation2YIntercept){
         double x = (equation2YIntercept-equation1YIntercept)/(equation1Slope-equation2Slope);
         double y = equation1Slope * x + equation1YIntercept;

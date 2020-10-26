@@ -2,15 +2,17 @@ package org.firstinspires.ftc.teamcode.Teleop;
 
 import com.arcrobotics.ftclib.geometry.Transform2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.spartronics4915.lib.T265Camera;
 
 import org.firstinspires.ftc.teamcode.FieldConstants;
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
+import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Mag;
 import org.firstinspires.ftc.teamcode.vision.T265;
 
 import java.io.FileWriter;
 import java.io.IOException;
-
+@TeleOp(name = "UltimateGoalTeleop",group="TeleOp")
 public class UltimateGoalTeleop extends OpMode {
     Hardware hardware;
     boolean slowMode;
@@ -22,10 +24,13 @@ public class UltimateGoalTeleop extends OpMode {
     boolean manuelRampControlTogglePrevLoop = false;
     boolean shooterOn = false;
     boolean shooterOnTogglePrevLoop = false;
+    boolean grip = true;
+    boolean gripOnToggledPrevLoop = false;
+    boolean armStateToggledPrevLoop = false;
     public void init(){
-        if (T265.slamra == null) {
+        /*if (T265.slamra == null) {
             T265.slamra = new T265Camera(new Transform2d(),T265.ODOMETRY_COVARIANCE, hardwareMap.appContext);
-        }
+        }*/
         hardware = new Hardware(hardwareMap,telemetry);
         slowMode = false;
     }
@@ -33,7 +38,7 @@ public class UltimateGoalTeleop extends OpMode {
         return constantB*(1/(1+Math.pow(Math.E,-constantC*(input-0.6)))) - constantB/2+0.5532;
     }
     public void start(){
-        T265.slamra.start();
+        //T265.slamra.start();
     }
     public void loop(){
         double leftPower;
@@ -64,7 +69,7 @@ public class UltimateGoalTeleop extends OpMode {
         hardware.sixWheelDrive.RB.setPower(rightPower);
         hardware.sendT265OdoData= false;
         hardware.loop();
-        T265Camera.CameraUpdate up = T265.slamra.getLastReceivedCameraUpdate();
+        /*T265Camera.CameraUpdate up = T265.slamra.getLastReceivedCameraUpdate();
         double[] t265position = T265.getCameraPosition(up);
         if(up.confidence == null){
             telemetry.addLine("no confidence level yet");
@@ -80,7 +85,7 @@ public class UltimateGoalTeleop extends OpMode {
         }
         else{
             telemetry.addLine("Pose Confidence Low");
-        }
+        }*/
         //manuel turret control toggle & turret control
         if(gamepad2.a) {
             if(!manuelTurretControlToggledPrevLoop) {
@@ -99,8 +104,9 @@ public class UltimateGoalTeleop extends OpMode {
         }
         else{
             hardware.turret.updatePID = true;
-            hardware.turret.pointTowardsHighGoal(new double[]{hardware.getXAbsoluteCenter(),hardware.getYAbsoluteCenter()});
+            hardware.turret.pointTowardsHighGoal();
         }
+        telemetry.addData("turret Position",hardware.turret.encoder.getCurrentPosition());
         //intake control
         hardware.intake.turnIntake(gamepad1.right_trigger);
         //mag control
@@ -128,14 +134,14 @@ public class UltimateGoalTeleop extends OpMode {
             }
         }
         if(manuelRampControl){
-            hardware.shooter.setRampDegrees(hardware.shooter.rampPostion + gamepad2.right_stick_y*0.05);
+            hardware.shooter.setRampPosition(hardware.shooter.rampPostion - gamepad2.right_stick_y*0.001);
         }
         else{
             hardware.shooter.autoRampPositionForHighGoal(Math.hypot(hardware.getYAbsoluteCenter()- FieldConstants.highGoalPosition[1],hardware.getXAbsoluteCenter() - FieldConstants.highGoalPosition[0]));
         }
-        telemetry.update();
+
         //shooter
-        if(gamepad2.right_bumper) {
+        if(gamepad1.left_bumper) {
             if(!shooterOnTogglePrevLoop) {
                 shooterOn = !shooterOn;
             }
@@ -147,11 +153,71 @@ public class UltimateGoalTeleop extends OpMode {
             }
         }
         if(shooterOn){
-            hardware.shooter.updatePID = true;
-            hardware.shooter.shooterVeloPID.setState(1440);
+            hardware.shooter.updatePID = false;
+            hardware.shooter.shooterMotor1.setPower(-1);
+            hardware.shooter.shooterMotor2.setPower(-1);
         }
+        else{
+            hardware.shooter.updatePID = false;
+            hardware.shooter.shooterVeloPID.setState(0);
+            hardware.shooter.shooterMotor2.setPower(0);
+            hardware.shooter.shooterMotor1.setPower(0);
+        }
+        //Flicker
+        if(gamepad2.x){
+            hardware.mag.pushInRings();
+        }
+        if(gamepad2.y){
+            hardware.mag.setRingPusherResting();
+        }
+        //wobbler
+        if(gamepad2.left_bumper) {
+            if(!gripOnToggledPrevLoop) {
+                grip = !grip;
+            }
+            gripOnToggledPrevLoop = true;
+        }
+        else{
+            if(gripOnToggledPrevLoop){
+                gripOnToggledPrevLoop = false;
+            }
+        }
+        if(grip){
+            hardware.wobbler.gripWobble();
+        }else{
+            hardware.wobbler.releaseWobble();
+        }
+        if(gamepad2.right_bumper) {
+            if(!armStateToggledPrevLoop) {
+                hardware.wobbler.toggleArmState();
+            }
+            armStateToggledPrevLoop = true;
+        }
+        else{
+            if(armStateToggledPrevLoop){
+                armStateToggledPrevLoop = false;
+            }
+        }
+
+        telemetry.addData("shooter On",shooterOn);
+        if(hardware.mag.currentState == Mag.State.BOTTOM){
+            telemetry.addLine("Mag State: BOTTOM");
+        }
+        else if(hardware.mag.currentState == Mag.State.MID){
+            telemetry.addLine("Mag State: MID");
+        }
+        else if(hardware.mag.currentState == Mag.State.BOTTOM){
+            telemetry.addLine("Mag State: BOTTOM");
+        }
+        else{
+            telemetry.addLine("Mag State: COLLECT");
+        }
+        telemetry.addData("Wobbler grip",grip);
+        telemetry.addData("Flap position",hardware.shooter.rampPostion);
+        telemetry.addLine("loops/sec: " + (hardware.loops / ((hardware.time.milliseconds()-hardware.startTime)/1000)));
+        telemetry.update();
     }
     public void stop(){
-        T265.slamra.stop();
+        //T265.slamra.stop();
     }
 }
