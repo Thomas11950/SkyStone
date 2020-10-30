@@ -22,7 +22,7 @@ public class Shooter {
     private boolean firstUpdateShooterPIDFLoop = true;
     private double prevShooterPos;
     public boolean updatePID;
-    public double rampPostion = START_TICKS_RAMP;
+    public double rampPostion = 0;
     public Shooter(Motor shooterMotor1, Motor shooterMotor2, RegServo shootAngleController, Hardware hardware){
         this.shootAngleController = shootAngleController;
         this.shooterMotor1 = shooterMotor1;

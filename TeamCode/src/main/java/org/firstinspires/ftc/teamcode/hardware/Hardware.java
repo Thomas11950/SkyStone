@@ -39,7 +39,7 @@ public class Hardware {
     public List<LynxModule> allHubs;
     private double centerWheelOffset = 4.91142;
 
-    private double centerWheelOffsetChange = 1.05;
+    private double centerWheelOffsetChange = 2.6;
     public static double trackWidth = 16.037;
     private static double portOffset = 7.674; // inches
     private static double starboardOffset = 8.103; //inches
@@ -85,6 +85,7 @@ public class Hardware {
     public double danglePrev=0;
     public double localY;
     public double localX;
+    public double localXToReportToRamseteDesiredKinematics;
     public double integratedAngularVeloTracker;
     public double deltaTime;
     public boolean currentlyForwardDirection = true;
@@ -218,7 +219,7 @@ public class Hardware {
             double bangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
             double dangle = MathFunctions.keepAngleWithin180Degrees(Math.toRadians(imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle));
             double deltaAngle1 = (360/357.0446428571429)*MathFunctions.keepAngleWithin180Degrees(bangle - banglePrev);
-            double deltaAngle2 = (360/359.7276785714286)*MathFunctions.keepAngleWithin180Degrees(dangle - danglePrev);
+            double deltaAngle2 = (360/359.9)*(360/358.872)*(360/359.7276785714286)*MathFunctions.keepAngleWithin180Degrees(dangle - danglePrev);
             angle1 += deltaAngle1;
             angle2 += deltaAngle2;
             banglePrev = bangle;
@@ -277,16 +278,16 @@ public class Hardware {
        int PortChange = portReading - previousPortReading;
             int StarboardChange = starboardReading - previousStarboardReading;
         if(ticker%8!=0) {
-            deltaAngleOdo  =  360/362.5*360/360.74258*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
+            deltaAngleOdo  =  360/362.400832143*360.0/361*360/355.123*360/362.5*360/360.74258*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
             angle += deltaAngleOdo;
             deltaAngle = deltaAngleOdo;
             ticker++;
         }
-            double deltaAngleBodo  =  360/362.5*360/360.74258*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
+            double deltaAngleBodo  =  360/362.400832143*360.0/361*360/355.123*360/362.5*360/360.74258*(StarboardChange - PortChange) / (odoWidth * ticks_per_rotation / circumfrence);
             angleOdo +=deltaAngleBodo;
             double localXAlt = lateralReading - previousLateralReading;//-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
              localX =  lateralReading - previousLateralReading-(deltaAngle * centerWheelOffset * (ticks_per_rotation/circumfrence));
-
+            localXToReportToRamseteDesiredKinematics = lateralReading - previousLateralReading-(deltaAngle * (centerWheelOffset-centerWheelOffsetChange) * (ticks_per_rotation/circumfrence));
         /*double localY = (PortChange + (deltaAngle * portOffset * (ticks_per_rotation/circumfrence)) + StarboardChange - (deltaAngle * starboardOffset * (ticks_per_rotation/circumfrence)))/2.0;
  */         double localYAlt = PortChange; //
              localY = (PortChange+ (deltaAngle * portOffset * (ticks_per_rotation/circumfrence)) + StarboardChange - (deltaAngle * starboardOffset * (ticks_per_rotation/circumfrence)))/2;

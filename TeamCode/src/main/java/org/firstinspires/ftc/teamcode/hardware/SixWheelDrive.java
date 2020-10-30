@@ -13,15 +13,15 @@ public class SixWheelDrive {
     public Motor RB;
     public VelocityPIDDrivetrain left;
     public VelocityPIDDrivetrain right;
-    public static double kP=0;//0.018;
+    public static double kP=0.025;
     public static double kD=0;
-    public static double kV=0.174;
-    public static double kStatic=1.282;
-    public static double kA = 0.0325;
-    public static double kDecel = 0.075;
-    public static double kI = 0;//0.016;
+    public static double kV=0.195;
+    public static double kStatic=1.38;
+    public static double kA = 0.0364;
+    public static double kDecel = 0.07;
+    public static double kI = 0.022;
     public static double kVAngularVelo = 0;//1.1;
-    public static double kAAngularAccel=0.3;//0.15;
+    public static double kAAngularAccel=0.45;//0.15;
     public static double kStaticAngularVelo = 0;
     public SixWheelDrive (Motor LF, Motor LB, Motor RF, Motor RB, ElapsedTime time){
         this.LF = LF;

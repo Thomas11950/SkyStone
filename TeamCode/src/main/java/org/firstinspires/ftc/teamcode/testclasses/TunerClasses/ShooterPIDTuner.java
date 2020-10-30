@@ -25,13 +25,13 @@ public class ShooterPIDTuner extends LinearOpMode {
             double currentTime = hardware.time.milliseconds();
             hardware.shooter.updatePID = true;
             if(currentTime - startTime < TIMETOREACHMAX){
-                hardware.shooter.shooterVeloPID.setState(1/TIMETOREACHMAX*(currentTime-startTime) * MAX_TICKS_PER_SEC);
+                hardware.shooter.shooterVeloPID.setState(-1/TIMETOREACHMAX*(currentTime-startTime) * MAX_TICKS_PER_SEC);
             }
             else{
                 MAX_TICKS_PER_SEC -= gamepad1.left_stick_y;
                 telemetry.addData("speed (Ticks/sec)", MAX_TICKS_PER_SEC);
                 telemetry.update();
-                hardware.shooter.shooterVeloPID.setState(MAX_TICKS_PER_SEC);
+                hardware.shooter.shooterVeloPID.setState(-MAX_TICKS_PER_SEC);
             }
             hardware.loop();
         }

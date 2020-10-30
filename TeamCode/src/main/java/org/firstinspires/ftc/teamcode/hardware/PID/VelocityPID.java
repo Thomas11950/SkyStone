@@ -54,6 +54,11 @@ public class VelocityPID extends GenericPID {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return error * kP + integral * kI + derivative * kD + kStatic + (desiredState * kV);
+        if(desiredState > 0) {
+            return error * kP + integral * kI + derivative * kD + kStatic + (desiredState * kV);
+        }
+        else{
+            return error * kP + integral * kI + derivative * kD - kStatic + (desiredState * kV);
+        }
     }
 }

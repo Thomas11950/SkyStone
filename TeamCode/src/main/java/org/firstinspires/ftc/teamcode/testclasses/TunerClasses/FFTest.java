@@ -40,22 +40,22 @@ public class FFTest extends LinearOpMode {
 
             prevTime = currentTime;
             if(true){
-                if(currentTime-startTime < 250) {
+                if(currentTime-startTime < 1000) {
                     RobotLog.dd("QFFTESTDEBUG",currentTime - startTime+"");
-                    hardware.sixWheelDrive.left.setState((currentTime - startTime) / 1000 * 240,240);
-                    hardware.sixWheelDrive.right.setState((currentTime - startTime) / 1000 * 240,240);
-                    requestedV = (currentTime - startTime) / 1000 * 240;
+                    hardware.sixWheelDrive.left.setState((currentTime - startTime) / 1000 * 55,55);
+                    hardware.sixWheelDrive.right.setState((currentTime - startTime) / 1000 * 55,55);
+                    requestedV = (currentTime - startTime) / 1000 * 55;
                 }
-                else if(currentTime - startTime < 500){
-                    hardware.sixWheelDrive.left.setState(60,0);
-                    hardware.sixWheelDrive.right.setState(60,0);
-                    requestedV = 60;
+                else if(currentTime - startTime < 1500){
+                    hardware.sixWheelDrive.left.setState(55,0);
+                    hardware.sixWheelDrive.right.setState(55,0);
+                    requestedV = 55;
                 }
                 else{
 
-                    requestedV = 60+((currentTime - startTime) / 1000-0.5) * -240;
-                    hardware.sixWheelDrive.left.setState(requestedV,-240);
-                    hardware.sixWheelDrive.right.setState(requestedV,-240);
+                    requestedV = 55+((currentTime - startTime) / 1000-1.5) * -55;
+                    hardware.sixWheelDrive.left.setState(requestedV,-55);
+                    hardware.sixWheelDrive.right.setState(requestedV,-55);
                 }
             }
             double leftPower = hardware.sixWheelDrive.left.updateCurrentStateAndGetOutput(velo);

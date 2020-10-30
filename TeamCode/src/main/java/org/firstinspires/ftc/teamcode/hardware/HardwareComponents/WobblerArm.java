@@ -35,7 +35,7 @@ public class WobblerArm {
     public void goToWobbleStartingPos(){
         wobblerArm.setPosition(armStartingPos);
     }
-
+    public void goToAutoWobblerDropPosition(){wobblerArm.setPosition((armRaiseWobble+armGrabWobblePos)/2);}
     public enum ArmState{
         START,
         GRIP,

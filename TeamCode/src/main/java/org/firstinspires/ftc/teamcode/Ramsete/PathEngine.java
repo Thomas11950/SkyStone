@@ -192,7 +192,7 @@ public class PathEngine{
 			RobotLog.dd(TAG,"angularVeloCommand: "+ angularVelocityCommand + ", angularVelo: " + currentMotionData.desiredAngularVelocity);
 			RobotLog.dd(TAG,"veloCommand: " + velocityCommand + ", velo: " +currentMotionData.desiredVelocity);
 			try {
-				writerDesiredKinematics.write("Time: "+currentTime+", Heading: " + currentMotionData.desiredHeading + ", ActualHeading: "+currentHeading + ", CurrentVelo: " + hardware.localYVelocity + ", VeloCommand: " + velocityCommand + ", DesiredVelo: "+currentMotionData.desiredVelocity*39.3701 + ", LateralVelo: " + hardware.localX/hardware.deltaTime+"\n");
+				writerDesiredKinematics.write("Time: "+currentTime+", Heading: " + currentMotionData.desiredHeading + ", ActualHeading: "+currentHeading + ", CurrentVelo: " + hardware.localYVelocity + ", VeloCommand: " + velocityCommand + ", DesiredVelo: "+currentMotionData.desiredVelocity*39.3701 + ", LateralVelo: " + hardware.localXToReportToRamseteDesiredKinematics/hardware.deltaTime+"\n");
 				writer.write("desired X: " + currentMotionData.desiredPosition.X * 39.3701 + ", desired Y: " + currentMotionData.desiredPosition.Y * 39.3701 + ", current X: " + hardware.getX()  + ", current Y: " + hardware.getY() +"\n");
 			}
 			catch(IOException e){

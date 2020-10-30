@@ -17,6 +17,6 @@ public class testRamsete extends LinearOpMode {
         waitForStart();
         hardware.updatePID = true;
         hardwareThreadInterface.start();
-        ramesetePath.run(hardware.time,20,0.7,true);
+        ramesetePath.run(hardware.time,20,0.7,false);
     }
 }

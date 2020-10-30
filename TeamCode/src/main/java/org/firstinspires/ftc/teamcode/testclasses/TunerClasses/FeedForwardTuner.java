@@ -33,10 +33,10 @@ public class FeedForwardTuner extends LinearOpMode {
         double currentTime = startTime;
         double prevTime = startTime;
         double prevDist = hardware.localY;
-        while(!isStopRequested() && currentTime < startTime + 8000){
+        while(!isStopRequested() && currentTime < startTime + 6000){
             sleep(50);
             double timeDiff = currentTime - startTime;
-            double i = timeDiff/8000;
+            double i = timeDiff/6000;
             if(isStopRequested()){
                 hardware.sixWheelDrive.goStraight(-1);
                 sleep(100);
@@ -51,7 +51,7 @@ public class FeedForwardTuner extends LinearOpMode {
             prevVelo = velocity;
             RobotLog.dd(TAG, "Velo: " + velocity + ", Power: " + i + ", Accel: "+ accel+", Voltage: " + getBatteryVoltage() * i);
             try {
-                writer.write("Velo: " + velocity + ", Power: " + i + ", Accel: "+ accel+", Voltage: " + getBatteryVoltage() * i);
+                writer.write("Velo: " + velocity + ", Power: " + i + ", Accel: "+ accel+", Voltage: " + getBatteryVoltage() * i+"\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }
