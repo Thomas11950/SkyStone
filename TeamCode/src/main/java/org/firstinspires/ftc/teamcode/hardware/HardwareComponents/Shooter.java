@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
 import org.firstinspires.ftc.teamcode.hardware.Motor;
+import org.firstinspires.ftc.teamcode.hardware.PID.ShooterPID;
 import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPIDDrivetrain;
 import org.firstinspires.ftc.teamcode.hardware.RegServo;
 import org.firstinspires.ftc.teamcode.hardware.PID.VelocityPID;
@@ -31,7 +32,7 @@ public class Shooter {
         this.shooterMotor1.motor.setDirection(DcMotorEx.Direction.FORWARD);
         this.shooterMotor2.motor.setDirection(DcMotorEx.Direction.FORWARD);
         this.hardware = hardware;
-        shooterVeloPID = new VelocityPID(0.0025,0.001,0,0.005,2.84,0,hardware.time,"/sdcard/FIRST/shooterFFdata.txt");
+        shooterVeloPID = new ShooterPID(0.0025,0.001,0,0.005,2.84,0,150,hardware.time,"/sdcard/FIRST/shooterFFdata.txt");
         shooterVeloPID.integralAntiWindupActive = false;
         updatePID = false;
     }
