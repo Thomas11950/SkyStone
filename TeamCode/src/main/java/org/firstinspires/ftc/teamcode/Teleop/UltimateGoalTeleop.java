@@ -200,7 +200,11 @@ public class UltimateGoalTeleop extends OpMode {
                 armStateToggledPrevLoop = false;
             }
         }
-
+        if(gamepad1.dpad_up){
+            shooterVelo -= 0.5;
+        }else if(gamepad1.dpad_down){
+            shooterVelo += 0.5;
+        }
         telemetry.addData("shooter On",shooterOn);
         if(hardware.mag.currentState == Mag.State.BOTTOM){
             telemetry.addLine("Mag State: BOTTOM");
@@ -220,6 +224,7 @@ public class UltimateGoalTeleop extends OpMode {
         telemetry.addLine("angle 1: "+Math.toDegrees(hardware.angle1) + ", angle 2: "+Math.toDegrees(hardware.angle2));
         telemetry.addLine("XCenter: " + hardware.getXAbsoluteCenter()  + ", YCenter: "+hardware.getYAbsoluteCenter());
         telemetry.addLine("left position: " + hardware.hub1Motors[0].getCurrentPosition() + ", right position: " + hardware.hub1Motors[3].motor.getCurrentPosition() + ", lateral position: " + -hardware.hub1Motors[1].getCurrentPosition());
+        telemetry.addLine("shooter velo: "+shooterVelo);
         telemetry.addLine("turret Angle: "+Math.toDegrees(hardware.turret.localTurretAngleRadians())+", turret output power: "+gamepad2.left_stick_x);
         telemetry.addLine("loops/sec: " + (hardware.loops / ((hardware.time.milliseconds()-hardware.startTime)/1000)));
         telemetry.update();
