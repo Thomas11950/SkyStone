@@ -47,6 +47,7 @@ public class Shooter {
         prevShooterPos = shooterPos;
         double outputPower = shooterVeloPID.updateCurrentStateAndGetOutput(currentVelo);
         double voltage = VelocityPIDDrivetrain.getBatteryVoltage();
+        Hardware.telemetry.addData("outputVoltage",outputPower);
         shooterMotor1.setPower(outputPower/voltage);
         shooterMotor2.setPower(outputPower/voltage);
     }

@@ -147,6 +147,9 @@ public class UltimateGoalTeleop extends OpMode {
         if(gamepad1.left_bumper) {
             if(!shooterOnTogglePrevLoop) {
                 shooterOn = !shooterOn;
+                if(shooterOn){
+                    hardware.shooter.firstUpdateShooterPIDFLoop = true;
+                }
             }
             shooterOnTogglePrevLoop = true;
         }
@@ -156,7 +159,6 @@ public class UltimateGoalTeleop extends OpMode {
             }
         }
         if(shooterOn){
-            hardware.shooter.firstUpdateShooterPIDFLoop = true;
             hardware.shooter.updatePID = true;
             hardware.shooter.shooterVeloPID.setState(shooterVelo);
         }
