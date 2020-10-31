@@ -19,7 +19,7 @@ public class Shooter {
     public VelocityPID shooterVeloPID;
     Hardware hardware;
     public RegServo shootAngleController;
-    private boolean firstUpdateShooterPIDFLoop = true;
+    public boolean firstUpdateShooterPIDFLoop = true;
     private double prevShooterPos;
     public boolean updatePID;
     public double rampPostion = 0;
@@ -43,6 +43,7 @@ public class Shooter {
         double shooterPos = shooterMotor2.getCurrentPosition();
         double currentVelo = (shooterPos - prevShooterPos)/deltaTime;
         Hardware.telemetry.addData("shooter velo",currentVelo);
+        Hardware.telemetry.addData("shooterPIDsetstate", shooterVeloPID.desiredState);
         prevShooterPos = shooterPos;
         double outputPower = shooterVeloPID.updateCurrentStateAndGetOutput(currentVelo);
         double voltage = VelocityPIDDrivetrain.getBatteryVoltage();

@@ -156,12 +156,12 @@ public class UltimateGoalTeleop extends OpMode {
             }
         }
         if(shooterOn){
+            hardware.shooter.firstUpdateShooterPIDFLoop = true;
             hardware.shooter.updatePID = true;
             hardware.shooter.shooterVeloPID.setState(shooterVelo);
         }
         else{
             hardware.shooter.updatePID = false;
-            hardware.shooter.shooterVeloPID.setState(0);
             hardware.shooter.shooterMotor2.setPower(0);
             hardware.shooter.shooterMotor1.setPower(0);
         }
