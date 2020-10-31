@@ -34,7 +34,7 @@ public class UltimateGoalTeleop extends OpMode {
         }*/
         hardware = new Hardware(hardwareMap,telemetry);
         slowMode = false;
-        shooterVelo = -1440;
+        shooterVelo = -1520;
     }
     public double logistic(double input, double constantB, double constantC){
         return constantB*(1/(1+Math.pow(Math.E,-constantC*(input-0.6)))) - constantB/2+0.5532;
@@ -152,6 +152,7 @@ public class UltimateGoalTeleop extends OpMode {
                 }
             }
             shooterOnTogglePrevLoop = true;
+            hardware.shooter.shooterVeloPID.clearI();
         }
         else{
             if(shooterOnTogglePrevLoop){
