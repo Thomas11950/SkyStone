@@ -55,12 +55,43 @@ public class UltimateGoalRedAuto extends AutoMethods {
         hardware.wobbler.goToWobbleStartingPos();
         hardware.wobbler.gripWobble();
         hardware.loop();
-        collect2ndWobbler.init();
+        /*collect2ndWobbler.init();
         dropWobbler1.init();
-        dropWobbler2.init();
+        dropWobbler2.init();*/
         waitForStart();
-        hardware.updatePID = true;
+        //first powershot
+        hardware.turret.turretPID.leewayDistance = Math.toRadians(1);
+        hardware.intake.turnIntake(1);
         hardwareThreadInterface.start();
+        hardware.shooter.setRampPosition(0);
+        hardware.shooter.shooterVeloPID.setState(-1200);
+        hardware.shooter.updatePID = true;
+        hardware.turret.turretPID.setState(Math.toRadians(-185));
+        hardware.turret.updatePID = true;
+        sleep(3000);
+        hardware.mag.updateStateAndSetPosition();
+        sleep(750);
+        hardware.mag.pushInRings();
+        sleep(500);
+        //2nd powershot
+        hardware.mag.setRingPusherResting();
+        hardware.mag.updateStateAndSetPosition();
+        hardware.turret.turretPID.setState(Math.toRadians(-183));
+        sleep(1000);
+        hardware.mag.pushInRings();
+        sleep(500);
+        //3rd powershot
+        hardware.mag.setRingPusherResting();
+        hardware.mag.updateStateAndSetPosition();
+        hardware.turret.turretPID.setState(Math.toRadians(-182));
+        sleep(1000);
+        hardware.mag.pushInRings();
+        sleep(500);
+        hardware.shooter.updatePID = false;
+        hardware.turret.updatePID = false;
+        hardware.intake.turnIntake(0);
+        /*
+        hardware.updatePID = true;
         dropWobbler1.run(hardware.time,20,0.7,false);
         hardware.wobbler.moveArmToGrabPos();
         sleep(750);
@@ -80,5 +111,6 @@ public class UltimateGoalRedAuto extends AutoMethods {
         sleep(500);
         turnTo(-360,1000,hardware);
         dropWobbler2.run(hardware.time,20,0.7,false);
+         */
     }
 }

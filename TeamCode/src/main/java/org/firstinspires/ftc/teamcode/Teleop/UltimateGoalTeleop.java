@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.spartronics4915.lib.T265Camera;
 
 import org.firstinspires.ftc.teamcode.FieldConstants;
+import org.firstinspires.ftc.teamcode.MathFunctions;
+import org.firstinspires.ftc.teamcode.Teleop.Multithreads.MagFlickerController;
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
 import org.firstinspires.ftc.teamcode.hardware.HardwareComponents.Mag;
 import org.firstinspires.ftc.teamcode.vision.T265;
@@ -28,6 +30,8 @@ public class UltimateGoalTeleop extends OpMode {
     boolean gripOnToggledPrevLoop = false;
     boolean armStateToggledPrevLoop = false;
     public double shooterVelo;
+    public boolean teleopStopped = false;
+    MagFlickerController magFlickerController;
     public void init(){
         /*if (T265.slamra == null) {
             T265.slamra = new T265Camera(new Transform2d(),T265.ODOMETRY_COVARIANCE, hardwareMap.appContext);
@@ -35,12 +39,14 @@ public class UltimateGoalTeleop extends OpMode {
         hardware = new Hardware(hardwareMap,telemetry);
         slowMode = false;
         shooterVelo = -1440;
+        magFlickerController = new MagFlickerController(hardware,this);
     }
     public double logistic(double input, double constantB, double constantC){
         return constantB*(1/(1+Math.pow(Math.E,-constantC*(input-0.6)))) - constantB/2+0.5532;
     }
     public void start(){
         //T265.slamra.start();
+        magFlickerController.start();
     }
     public void loop(){
         double leftPower;
@@ -67,8 +73,8 @@ public class UltimateGoalTeleop extends OpMode {
         }
         hardware.sixWheelDrive.LF.setPower(leftPower);
         hardware.sixWheelDrive.LB.setPower(leftPower);
-        hardware.sixWheelDrive.RF.setPower(leftPower);
-        hardware.sixWheelDrive.RB.setPower(leftPower);
+        hardware.sixWheelDrive.RF.setPower(rightPower);
+        hardware.sixWheelDrive.RB.setPower(rightPower);
         hardware.sendT265OdoData= false;
         hardware.loop();
         /*T265Camera.CameraUpdate up = T265.slamra.getLastReceivedCameraUpdate();
@@ -115,7 +121,7 @@ public class UltimateGoalTeleop extends OpMode {
         //mag control
         if(gamepad1.right_bumper) {
             if(!magUpdateStateAndSetPositionPrevLoop) {
-                hardware.mag.updateStateAndSetPosition();
+                magFlickerController.updateMagStateAndSetPosition();
             }
             magUpdateStateAndSetPositionPrevLoop = true;
         }
@@ -137,10 +143,17 @@ public class UltimateGoalTeleop extends OpMode {
             }
         }
         if(manuelRampControl){
+            hardware.turret.updatePID = false;
             hardware.shooter.setRampPosition(hardware.shooter.rampPostion - gamepad2.right_stick_y*0.001);
         }
         else{
-            hardware.shooter.autoRampPositionForHighGoal(Math.hypot(hardware.getYAbsoluteCenter()- FieldConstants.highGoalPosition[1],hardware.getXAbsoluteCenter() - FieldConstants.highGoalPosition[0]));
+            double[] turretPosition = MathFunctions.transposeCoordinate(hardware.getXAbsoluteCenter(),hardware.getYAbsoluteCenter(),-4.72974566929,hardware.angle);
+            double distanceToGoal = Math.hypot(turretPosition[1]- FieldConstants.highGoalPosition[1],turretPosition[0] - FieldConstants.highGoalPosition[0]);
+            double angleToGoal = Math.atan2(FieldConstants.highGoalPosition[1]-turretPosition[1], FieldConstants.highGoalPosition[0]-turretPosition[0]) - hardware.turret.getTurretOffset(distanceToGoal);
+            telemetry.addData("angleToGoal",Math.toDegrees(angleToGoal));
+            hardware.shooter.autoRampPositionForHighGoal(distanceToGoal);
+            hardware.turret.updatePID = true;
+            hardware.turret.setTurretAngle(angleToGoal);
         }
 
         //shooter
@@ -234,5 +247,6 @@ public class UltimateGoalTeleop extends OpMode {
     }
     public void stop(){
         //T265.slamra.stop();
+        teleopStopped = true;
     }
 }

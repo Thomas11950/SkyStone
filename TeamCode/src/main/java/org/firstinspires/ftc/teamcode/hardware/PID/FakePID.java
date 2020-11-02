@@ -5,19 +5,22 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 //kP is that set power
 public class FakePID extends GenericPID {
     double leewayDistance;
-    public FakePID(double kP, double leewayDistance,  ElapsedTime time) {
+    double kStatic;
+    public FakePID(double kP, double kStatic, double leewayDistance,  ElapsedTime time) {
         super(kP, 0, 0, time);
         this.leewayDistance = leewayDistance;
+        this.kStatic = kStatic;
     }
     public void setState(double desiredState){
         this.desiredState = desiredState;
     }
     public double updateCurrentStateAndGetOutput(double currentState){
-        if(currentState > desiredState + leewayDistance){
-            return -kP;
+        double error = desiredState - currentState;
+        if(currentState > desiredState + leewayDistance ){
+            return -kStatic + kP*error;
         }
-        else if(currentState < desiredState - leewayDistance){
-            return  kP;
+        else if(currentState < desiredState - leewayDistance ){
+            return  kStatic + kP*error;
         }
         else{
             return 0;

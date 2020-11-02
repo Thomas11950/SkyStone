@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.MathFunctions;
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
 import org.firstinspires.ftc.teamcode.hardware.Motor;
 import org.firstinspires.ftc.teamcode.hardware.PID.ShooterPID;
@@ -24,6 +25,7 @@ public class Shooter {
     private double prevShooterPos;
     public boolean updatePID;
     public double rampPostion = 0;
+    AutoShootInfo info;
     public Shooter(Motor shooterMotor1, Motor shooterMotor2, RegServo shootAngleController, Hardware hardware){
         this.shootAngleController = shootAngleController;
         this.shooterMotor1 = shooterMotor1;
@@ -35,6 +37,7 @@ public class Shooter {
         shooterVeloPID = new ShooterPID(0.0025,0.001,0,0.005,2.84,0,150,hardware.time,"/sdcard/FIRST/shooterFFdata.txt");
         shooterVeloPID.integralAntiWindupActive = false;
         updatePID = false;
+        info = new AutoShootInfo();
     }
     public void updateShooterPIDF(double deltaTime){
         if(firstUpdateShooterPIDFLoop){
@@ -57,6 +60,16 @@ public class Shooter {
         shootAngleController.setPosition(START_TICKS_RAMP - rampPostion *(START_TICKS_RAMP-END_TICKS_RAMP));
     }
     public void autoRampPositionForHighGoal(double distanceToGoal){
-
+        double rampAngle = 0;
+        for(int i = 0; i < info.distances.size()-1; i++){
+            if(MathFunctions.isInBetween(info.distances.get(i), info.distances.get(i+1), distanceToGoal)){
+                Hardware.telemetry.addData("index of point",i);
+                double slope = (info.rampAngles.get(i+1) - info.rampAngles.get(i))/(info.distances.get(i+1)-info.distances.get(i));
+                rampAngle = slope*(distanceToGoal - info.distances.get(i))+info.rampAngles.get(i);
+            }
+        }
+        Hardware.telemetry.addData("distToGoal",distanceToGoal);
+        Hardware.telemetry.addData("rampAngle",rampAngle);
+        setRampPosition(rampAngle);
     }
 }
